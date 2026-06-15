@@ -8,7 +8,9 @@ node_modules/
 out/
 
 # бд SQLite (локальная)
+dev.db
 prisma/dev.db
+*.db
 prisma/dev.db-journal
 
 # (секреты, хуй вам)
