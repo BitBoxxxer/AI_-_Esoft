@@ -38,6 +38,7 @@ model User {
   email         String?      @unique
   emailVerified DateTime?
   image         String?
+  dailyGoal     Int          @default(0)
   accounts      Account[]
   sessions      Session[]
   dailyStats    DailyStats[]
@@ -46,14 +47,15 @@ model User {
 }
 
 model DailyStats {
-  id      String   @id @default(cuid())
-  userId  String
-  date    DateTime @map("date")
-  commits Int      @default(0)
-  prs     Int      @default(0)
-  issues  Int      @default(0)
-  goalMet Boolean  @default(false)
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  userId        String
+  date          DateTime @map("date")
+  commits       Int      @default(0)
+  prs           Int      @default(0)
+  issues        Int      @default(0)
+  contributions Int      @default(0)
+  goalMet       Boolean  @default(false)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([userId, date])
 }
 

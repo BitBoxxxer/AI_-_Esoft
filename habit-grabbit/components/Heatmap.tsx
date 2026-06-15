@@ -5,6 +5,7 @@ interface DailyStats {
   commits: number;
   prs: number;
   issues: number;
+  contributions?: number;
 }
 
 function getIntensity(count: number): number {
@@ -28,7 +29,7 @@ export default function Heatmap({ data }: { data: DailyStats[] }) {
     const map = new Map<string, number>();
     data.forEach((d) => {
       const key = d.date.toISOString().slice(0, 10);
-      const total = d.commits + d.prs + d.issues;
+      const total = d.contributions ?? 0;
       map.set(key, (map.get(key) || 0) + total);
     });
     return map;

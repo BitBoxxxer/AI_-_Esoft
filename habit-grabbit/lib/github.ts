@@ -56,3 +56,72 @@ export function aggregateStats(events: GitHubEvent[]): DailyStatsData[] {
 
   return Array.from(dailyMap.values());
 }
+
+// lib/github.ts
+
+export interface ContributionDay {
+  date: string;
+  contributionCount: number;
+}
+
+export async function fetchContributions(
+  username: string,
+  accessToken: string,
+  from?: string, // YYYY-MM-DDTHH:MM:SSZ
+  to?: string
+): Promise<ContributionDay[]> {
+  const query = `
+    query($username: String!, $from: DateTime, $to: DateTime) {
+      user(login: $username) {
+        contributionsCollection(from: $from, to: $to) {
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                date
+                contributionCount
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    username,
+    from: from || new Date(Date.now() - 366 * 24 * 60 * 60 * 1000).toISOString(),
+    to: to || new Date().toISOString(),
+  };
+
+  const res = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: {
+      Authorization: `bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`GraphQL error: ${res.status}`);
+  }
+
+  const json = await res.json();
+  if (json.errors) {
+    console.error(json.errors);
+    throw new Error(json.errors[0].message);
+  }
+
+  const weeks = json.data.user.contributionsCollection.contributionCalendar.weeks;
+  const days: ContributionDay[] = [];
+  for (const week of weeks) {
+    for (const day of week.contributionDays) {
+      days.push({
+        date: day.date,
+        contributionCount: day.contributionCount,
+      });
+    }
+  }
+  return days;
+}

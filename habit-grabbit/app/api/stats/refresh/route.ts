@@ -1,8 +1,7 @@
-// app/api/stats/refresh/route.ts
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { fetchGitHubEvents, aggregateStats } from "@/lib/github";
+import { fetchContributions } from "@/lib/github";
 
 export async function POST() {
   const session = await getServerSession(authOptions);
@@ -11,48 +10,38 @@ export async function POST() {
   }
 
   try {
-    const allEvents = [];
-    // Пробуем получить максимум страниц, пока не закончатся события
-    for (let page = 1; page <= 10; page++) {
-      const events = await fetchGitHubEvents(
-        session.user.login,
-        session.user.accessToken,
-        100,
-        page
-      );
-      allEvents.push(...events);
-      if (events.length < 100) break;
-    }
+    // Получаем контрибуции за последние 365 дней
+    const days = await fetchContributions(
+      session.user.login,
+      session.user.accessToken
+    );
 
-    const dailyStats = aggregateStats(allEvents);
-
-    for (const stat of dailyStats) {
+    // Сохраняем в БД
+    for (const day of days) {
       await prisma.dailyStats.upsert({
         where: {
           userId_date: {
             userId: session.user.id,
-            date: new Date(stat.date + "T00:00:00Z"),
+            date: new Date(day.date + "T00:00:00Z"),
           },
         },
         update: {
-          commits: stat.commits,
-          prs: stat.prs,
-          issues: stat.issues,
+          contributions: day.contributionCount,
         },
         create: {
           userId: session.user.id,
-          date: new Date(stat.date + "T00:00:00Z"),
-          commits: stat.commits,
-          prs: stat.prs,
-          issues: stat.issues,
-          goalMet: false,
+          date: new Date(day.date + "T00:00:00Z"),
+          contributions: day.contributionCount,
+          commits: 0,
+          prs: 0,
+          issues: 0,
         },
       });
     }
 
-    return new Response(JSON.stringify({ success: true, days: dailyStats.length }), { status: 200 });
+    return new Response(JSON.stringify({ success: true, days: days.length }), { status: 200 });
   } catch (error) {
     console.error(error);
-    return new Response("Error fetching stats", { status: 500 });
+    return new Response("Error fetching contributions", { status: 500 });
   }
 }
