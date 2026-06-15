@@ -24,3 +24,28 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Тёмный скроллбар для всей страницы */
+html {
+  scrollbar-color: #4a5568 #1a1a1a; /* Firefox */
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a; /* тёмный фон трека */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #4a5568; /* тёмно-серый ползунок */
+  border-radius: 4px;
+  border: 2px solid #1a1a1a; /* отступ, чтобы ползунок не сливался */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #718096; /* посветлее при наведении */
+}
