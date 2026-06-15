@@ -55,6 +55,12 @@ export default async function DashboardPage() {
           </h1>
         </div>
         <div className="flex gap-2">
+          <a
+            href="/chat"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
+          >
+            💬 Чат AI
+          </a>
           <RefreshStatsButton />
           <SignOutButton />
         </div>
@@ -72,11 +78,7 @@ export default async function DashboardPage() {
 
         <div className="bg-black text-white rounded-xl shadow p-4">
           <p className="text-sm text-gray-300">Совет дня</p>
-          <p className="text-white mt-1 text-sm">
-            {streak > 0
-              ? `Огонь! У тебя стрик ${streak} ${streak === 1 ? "день" : "дней"}. Продолжай в том же духе!`
-              : "Сделай первый коммит сегодня, чтобы начать стрик!"}
-          </p>
+          <p className="text-white mt-1 text-sm">{getDailyAdvice(streak, todayContributions, dailyGoal)}</p>
           <p className="text-gray-400 text-xs mt-2">
             ⚡ Персональный AI-совет появится позже
           </p>
@@ -129,4 +131,53 @@ function calculateStreak(
     }
   }
   return streak;
+}
+
+function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: number): string {
+  // Нет цели или цель 0 — советы без дневной нормы
+  if (!dailyGoal) {
+    if (streak === 0 && todayContributions === 0) {
+      return "Сегодня новый день! Сделай первый шаг — один коммит запустит твой стрик.";
+    }
+    if (streak === 0 && todayContributions > 0) {
+      return "Отлично, активность есть! Продолжай, чтобы начать стрик.";
+    }
+    if (streak === 1) {
+      return "Первый день стрика! Завтра будет второй — ты сможешь!";
+    }
+    if (streak >= 2 && streak <= 6) {
+      return `Стрик ${streak} дней подряд! Ты набираешь обороты, не сдавайся.`;
+    }
+    if (streak >= 7 && streak <= 30) {
+      return `Огонь! ${streak} дней без перерыва. Ты входишь в ритм профи.`;
+    }
+    return `🔥 ${streak} дней! Ты — машина продуктивности.`;
+  }
+
+  // Когда дневная цель задана
+  const progressPercent = Math.round((todayContributions / dailyGoal) * 100);
+  const remaining = dailyGoal - todayContributions;
+
+  if (todayContributions >= dailyGoal) {
+    return streak > 0
+      ? `🎉 Норма выполнена на ${progressPercent}%! И стрик ${streak} дней — ты супергерой.`
+      : `✅ Дневная норма выполнена на ${progressPercent}%! Отличная работа.`;
+  }
+
+  if (progressPercent >= 50) {
+    return streak > 0
+      ? `Ты прошёл ${progressPercent}% цели (${todayContributions}/${dailyGoal}) при стрике ${streak} дней. Осталось чуть-чуть!`
+      : `Уже ${progressPercent}% нормы. Осталось ${remaining} действий — дожми сегодня!`;
+  }
+
+  if (todayContributions > 0) {
+    return streak > 0
+      ? `Начало положено: ${todayContributions}/${dailyGoal}. Стрик ${streak} дней ждёт продолжения.`
+      : `Сегодня ${todayContributions}/${dailyGoal}. Продолжай в том же духе, чтобы закрыть норму.`;
+  }
+
+  // 0 contributions
+  return streak > 0
+    ? `Стрик ${streak} дней под угрозой! У тебя ещё есть время сделать ${dailyGoal} действий.`
+    : "День только начался! Поставь себе цель выполнить дневную норму и начни с одного коммита.";
 }

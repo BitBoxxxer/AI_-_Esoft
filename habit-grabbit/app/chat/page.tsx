@@ -10,6 +10,12 @@ const quickActions = [
   "Придумай идею для pet-проекта",
 ];
 
+const memoryLevels = [
+  { label: "Быстрый", value: 0, desc: "без памяти" },
+  { label: "Обычный", value: 10, desc: "10 сообщений" },
+  { label: "Умный", value: 25, desc: "25 сообщений" },
+];
+
 export default function ChatPage() {
   const { data: session, status } = useSession();
   const [messages, setMessages] = useState<
@@ -18,6 +24,18 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Уровень памяти (по умолчанию 10)
+  const [memory, setMemory] = useState(10);
+
+  // Загружаем сохранённый уровень из localStorage при монтировании
+  useEffect(() => {
+    const saved = localStorage.getItem("chat-memory");
+    if (saved) {
+      const num = parseInt(saved, 10);
+      if (memoryLevels.some((l) => l.value === num)) setMemory(num);
+    }
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") redirect("/login");
@@ -39,7 +57,7 @@ export default function ChatPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageText }),
+        body: JSON.stringify({ message: messageText, memory }),
       });
 
       if (res.ok) {
@@ -64,6 +82,11 @@ export default function ChatPage() {
     }
   };
 
+  const changeMemory = (value: number) => {
+    setMemory(value);
+    localStorage.setItem("chat-memory", value.toString());
+  };
+
   if (status === "loading")
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -73,14 +96,34 @@ export default function ChatPage() {
 
   return (
     <main className="min-h-screen bg-black text-white flex flex-col">
-      {/* Шапка */}
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center gap-4">
-        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-600/20">
-          🐰
+      {/* Шапка с переключателем памяти */}
+      <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-600/20">
+            🐰
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold">AI-советник</h1>
+            <p className="text-xs text-gray-400">Всегда рядом, чтобы помочь</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-lg font-semibold">AI-Кроль</h1>
-          <p className="text-xs text-gray-400">Всегда рядом, чтобы помочь</p>
+
+        {/* Переключатель уровней памяти */}
+        <div className="flex items-center gap-1">
+          {memoryLevels.map((level) => (
+            <button
+              key={level.value}
+              onClick={() => changeMemory(level.value)}
+              className={`px-3 py-1 rounded-lg text-xs transition ${
+                memory === level.value
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-900 text-gray-400 hover:bg-gray-800"
+              }`}
+              title={level.desc}
+            >
+              {level.label}
+            </button>
+          ))}
         </div>
       </header>
 
@@ -121,7 +164,7 @@ export default function ChatPage() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Быстрые действия */}
+      {/* Быстрые действия (только если нет сообщений) */}
       {messages.length === 0 && (
         <div className="px-4 pb-2 flex flex-wrap gap-2">
           {quickActions.map((action) => (

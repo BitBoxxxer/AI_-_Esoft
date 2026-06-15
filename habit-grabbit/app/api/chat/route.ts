@@ -16,42 +16,34 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { message } = await request.json();
+  const { message, memory = 10 } = await request.json(); // по умолчанию 10
   if (!message || typeof message !== "string") {
     return new Response("Message required", { status: 400 });
   }
 
+  // Ограничим память разумными пределами
+  const historyLimit = Math.min(Math.max(memory, 0), 50); // 0..50
+
   try {
-    // Получаем последние 10 сообщений для контекста
     const history = await prisma.chatMessage.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
-      take: 10,
+      take: historyLimit,
     });
 
-    // Формируем массив сообщений для AI
-    // Приводим history к нужному типу
-    const historyMessages = history
-    .map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-    }))
-    .reverse();
-
     const aiMessages: AIChatMessage[] = [
-    { role: "system", content: SYSTEM_PROMPT },
-    ...history
+      { role: "system", content: SYSTEM_PROMPT },
+      ...history
         .map((msg) => ({
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
         }))
         .reverse(),
-    { role: "user", content: message },
+      { role: "user", content: message },
     ];
 
-    const reply = await generateAIResponse(aiMessages);
+    const reply = await generateAIResponse(aiMessages, "llama3.1:8b");
 
-    // Сохраняем сообщение пользователя
     await prisma.chatMessage.create({
       data: {
         userId: session.user.id,
@@ -60,7 +52,6 @@ export async function POST(request: Request) {
       },
     });
 
-    // Сохраняем ответ ассистента
     const assistantMessage = await prisma.chatMessage.create({
       data: {
         userId: session.user.id,
@@ -70,10 +61,7 @@ export async function POST(request: Request) {
     });
 
     return new Response(
-      JSON.stringify({
-        reply,
-        messageId: assistantMessage.id,
-      }),
+      JSON.stringify({ reply, messageId: assistantMessage.id }),
       { status: 200 }
     );
   } catch (error) {
