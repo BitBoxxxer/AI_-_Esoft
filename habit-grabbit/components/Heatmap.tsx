@@ -1,12 +1,6 @@
+"use client";
 import { useMemo } from "react";
-
-interface DailyStats {
-  date: Date;
-  commits: number;
-  prs: number;
-  issues: number;
-  contributions?: number;
-}
+import type { DailyStats } from "@/types";
 
 function getIntensity(count: number): number {
   if (count === 0) return 0;
@@ -24,12 +18,20 @@ const intensityColors: Record<number, string> = {
   4: "bg-green-300",
 };
 
-export default function Heatmap({ data }: { data: DailyStats[] }) {
+export default function Heatmap({
+  data,
+  days = 365,
+}: {
+  data: DailyStats[];
+  days?: number;
+}) {
   const statsMap = useMemo(() => {
     const map = new Map<string, number>();
     data.forEach((d) => {
-      const key = d.date.toISOString().slice(0, 10);
-      const total = d.contributions ?? 0;
+      const dateObj = typeof d.date === "string" ? new Date(d.date) : d.date;
+      if (isNaN(dateObj.getTime())) return;
+      const key = dateObj.toISOString().slice(0, 10);
+      const total = d.contributions ?? d.commits + d.prs + d.issues;
       map.set(key, (map.get(key) || 0) + total);
     });
     return map;
@@ -38,8 +40,11 @@ export default function Heatmap({ data }: { data: DailyStats[] }) {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
 
+  // Начало периода: today - (days - 1) дней
   const startDate = new Date(today);
-  startDate.setDate(today.getDate() - 364);
+  startDate.setDate(today.getDate() - (days - 1));
+
+  // Сдвигаем к понедельнику для красивой сетки
   const dayOfWeek = startDate.getDay();
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   startDate.setDate(startDate.getDate() + mondayOffset);
@@ -64,7 +69,6 @@ export default function Heatmap({ data }: { data: DailyStats[] }) {
   }
 
   const dayLabels = ["Пн", "", "Ср", "", "Пт", "", ""];
-
   const monthNames = [
     "Янв", "Фев", "Мар", "Апр", "Май", "Июн",
     "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек",
@@ -84,7 +88,6 @@ export default function Heatmap({ data }: { data: DailyStats[] }) {
 
   return (
     <div>
-      {/* Легенда */}
       <div className="flex items-center gap-1 mb-2">
         <span className="text-xs text-gray-300">Меньше</span>
         {[0, 1, 2, 3, 4].map((level) => (
@@ -96,32 +99,27 @@ export default function Heatmap({ data }: { data: DailyStats[] }) {
         <span className="text-xs text-gray-300">Больше</span>
       </div>
 
-      {/* Сетка */}
       <div className="overflow-x-auto">
         <div className="flex">
-          {/* Метки дней недели */}
-          <div className="flex flex-col justify-between pr-2">
-            {dayLabels.map((label, i) => (
-              <div
-                key={i}
-                className="h-4 text-xs text-gray-300 leading-4"
-                style={{ marginTop: i === 0 ? 0 : 12 }}
-              >
-                {label}
+          <div className="flex flex-col pt-5 pr-3">
+            {["Пн", "", "Ср", "", "Пт", "", ""].map((day, i) => (
+              <div key={i} className="h-5 flex items-center text-xs text-gray-300">
+                {day}
               </div>
             ))}
           </div>
 
-          {/* Основная область с колонками недель */}
           <div>
-            {/* Подписи месяцев */}
             <div className="flex mb-1">
               {monthLabels.map((m, idx) => (
                 <div
                   key={idx}
                   className="text-xs text-gray-300"
                   style={{
-                    marginLeft: idx === 0 ? m.index * 16 : (m.index - monthLabels[idx - 1].index) * 16,
+                    marginLeft:
+                      idx === 0
+                        ? m.index * 16
+                        : (m.index - monthLabels[idx - 1].index) * 16,
                   }}
                 >
                   {m.label}
@@ -129,14 +127,15 @@ export default function Heatmap({ data }: { data: DailyStats[] }) {
               ))}
             </div>
 
-            {/* Недели */}
             <div className="flex gap-1">
               {weeks.map((week, weekIdx) => (
                 <div key={weekIdx} className="flex flex-col gap-1">
                   {week.map((day, dayIdx) => (
                     <div
                       key={dayIdx}
-                      className={`w-4 h-4 rounded-sm ${intensityColors[getIntensity(day.count)]}`}
+                      className={`w-4 h-4 rounded-sm ${
+                        intensityColors[getIntensity(day.count)]
+                      }`}
                       title={`${day.date}: ${day.count} действий`}
                     />
                   ))}

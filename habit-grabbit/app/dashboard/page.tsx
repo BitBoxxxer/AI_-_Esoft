@@ -1,12 +1,13 @@
+// app/dashboard/page.tsx
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import Heatmap from "@/components/Heatmap";
 import StreakBadge from "@/components/StreakBadge";
 import GoalRing from "@/components/GoalRing";
 import RefreshStatsButton from "@/components/RefreshStatsButton";
 import SignOutButton from "@/components/SignOutButton";
 import GoalSetter from "@/components/GoalSetter";
+import ActivityView from "@/components/ActivityView";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -14,13 +15,14 @@ export default async function DashboardPage() {
     return <div>Вы не авторизованы. Пожалуйста, войдите.</div>;
   }
 
-  // Получаем пользователя с dailyGoal
+  // Получаем dailyGoal пользователя
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { dailyGoal: true },
   });
   const dailyGoal = user?.dailyGoal ?? 0;
 
+  // Начальная загрузка: последние 365 дней (для быстрого рендера)
   const stats = await prisma.dailyStats.findMany({
     where: { userId: session.user.id },
     orderBy: { date: "desc" },
@@ -29,6 +31,7 @@ export default async function DashboardPage() {
 
   const streak = calculateStreak(stats);
 
+  // Сегодняшние данные для дневной нормы
   const todayStr = new Date().toISOString().slice(0, 10);
   const todayStats = stats.find(
     (s) => s.date.toISOString().slice(0, 10) === todayStr
@@ -37,20 +40,30 @@ export default async function DashboardPage() {
 
   return (
     <main className="p-6 max-w-6xl mx-auto">
+      {/* Шапка с аватаром и кнопками */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-white">
-          Привет, {session.user.login || session.user.name}!
-        </h1>
+        <div className="flex items-center gap-3">
+          {session.user?.image && (
+            <img
+              src={session.user.image}
+              alt="avatar"
+              className="w-20 h-20 rounded-full border-2 border-gray-600"
+            />
+          )}
+          <h1 className="text-3xl font-bold text-white">
+            Привет, {session.user.login || session.user.name}!
+          </h1>
+        </div>
         <div className="flex gap-2">
           <RefreshStatsButton />
           <SignOutButton />
         </div>
       </div>
 
+      {/* Карточки */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <StreakBadge streak={streak} />
 
-        {/* Блок дневной нормы: опциональный */}
         {dailyGoal > 0 ? (
           <GoalRing done={todayContributions} goal={dailyGoal} />
         ) : (
@@ -70,22 +83,22 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Быстрое изменение цели, если она уже задана — добавим кнопку-шестерёнку прямо в GoalRing? 
-          Сейчас GoalSetter используется только когда цель не задана. Для редактирования добавим маленькую иконку в GoalRing. */}
+      {/* Редактирование цели (если уже задана) */}
       {dailyGoal > 0 && (
         <div className="mb-4">
           <GoalSetter currentGoal={dailyGoal} />
         </div>
       )}
 
+      {/* Блок активности с переключателем периодов */}
       <section className="bg-black rounded-xl shadow p-4">
-        <h2 className="text-xl font-semibold text-white mb-4">Активность за год</h2>
-        <Heatmap data={stats} />
+        <ActivityView initialStats={stats} />
       </section>
     </main>
   );
 }
 
+// Функция подсчёта streak (оставляем как была)
 function calculateStreak(
   stats: { date: Date; contributions: number }[]
 ): number {
