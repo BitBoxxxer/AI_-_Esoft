@@ -56,10 +56,16 @@ export default async function DashboardPage() {
         </div>
         <div className="flex gap-2">
           <a
+            href="/goals"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
+          >
+            Цели
+          </a>
+          <a
             href="/chat"
             className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
           >
-            💬 Чат AI
+            💬 AI
           </a>
           <RefreshStatsButton />
           <SignOutButton />

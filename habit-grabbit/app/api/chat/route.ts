@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { message, memory = 10 } = await request.json(); // по умолчанию 10
+  const { message, memory = 10, conversationId } = await request.json();
   if (!message || typeof message !== "string") {
     return new Response("Message required", { status: 400 });
   }
@@ -47,6 +47,7 @@ export async function POST(request: Request) {
     await prisma.chatMessage.create({
       data: {
         userId: session.user.id,
+        conversationId,
         role: "user",
         content: message,
       },
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
     const assistantMessage = await prisma.chatMessage.create({
       data: {
         userId: session.user.id,
+        conversationId,
         role: "assistant",
         content: reply,
       },
