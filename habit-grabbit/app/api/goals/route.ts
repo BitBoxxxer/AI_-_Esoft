@@ -19,13 +19,14 @@ export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
-  const { title, description, targetCommits, targetPRs, targetIssues, deadline, githubIssueUrl } =
+  const { title, columnId, description, targetCommits, targetPRs, targetIssues, deadline, githubIssueUrl } =
     await request.json();
 
   const goal = await prisma.goal.create({
     data: {
       userId: session.user.id,
       title,
+      columnId: columnId || "", // если не передали, будет пустая строка, но мы всегда будем передавать
       description: description || null,
       targetCommits: targetCommits || null,
       targetPRs: targetPRs || null,

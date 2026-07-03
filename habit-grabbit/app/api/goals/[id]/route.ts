@@ -23,6 +23,7 @@ export async function PATCH(
   if (body.deadline !== undefined)
     updateData.deadline = body.deadline ? new Date(body.deadline) : null;
   if (body.githubIssueUrl !== undefined) updateData.githubIssueUrl = body.githubIssueUrl;
+  if (body.columnId !== undefined) updateData.columnId = body.columnId;
   // При желании можно добавить targetCommits и т.д.
 
   const updated = await prisma.goal.update({

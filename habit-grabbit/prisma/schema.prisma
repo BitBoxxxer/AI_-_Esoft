@@ -43,6 +43,9 @@ model User {
   sessions      Session[]
   dailyStats    DailyStats[]
   goals         Goal[]
+  columns       GoalColumn[]
+  notifyAboutGoal  Boolean   @default(true)
+  notifications Notification[]
   chatMessages  ChatMessage[]
   conversations  Conversation[]
 }
@@ -61,18 +64,31 @@ model DailyStats {
 }
 
 model Goal {
-  id             String   @id @default(cuid())
+  id             String      @id @default(cuid())
   userId         String
+  columnId       String      @default("")  // оно заполняется в коде если что
   title          String
   description    String?
   targetCommits  Int?
   targetPRs      Int?
   targetIssues   Int?
   deadline       DateTime?
-  completed      Boolean  @default(false)
+  completed      Boolean     @default(false)
   githubIssueUrl String?
-  createdAt      DateTime @default(now())
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  column         GoalColumn  @relation(fields: [columnId], references: [id], onDelete: Cascade)
+}
+
+model GoalColumn {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  order     Int      @default(0) // порядок колонок
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goals     Goal[]
 }
 
 model Conversation {
@@ -94,4 +110,14 @@ model ChatMessage {
   createdAt      DateTime     @default(now())
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // e.g., "goal_not_met"
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

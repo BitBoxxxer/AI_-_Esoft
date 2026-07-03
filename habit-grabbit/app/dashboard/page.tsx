@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +7,7 @@ import RefreshStatsButton from "@/components/RefreshStatsButton";
 import SignOutButton from "@/components/SignOutButton";
 import GoalSetter from "@/components/GoalSetter";
 import ActivityView from "@/components/ActivityView";
+import NotificationBell from "@/components/NotificationBell";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   // Получаем dailyGoal пользователя
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { dailyGoal: true },
+    select: { dailyGoal: true , notifyAboutGoal: true},
   });
   const dailyGoal = user?.dailyGoal ?? 0;
 
@@ -37,6 +37,28 @@ export default async function DashboardPage() {
     (s) => s.date.toISOString().slice(0, 10) === todayStr
   );
   const todayContributions = todayStats?.contributions ?? 0;
+  const notifyAboutGoal = user?.notifyAboutGoal ?? true;
+
+  if (notifyAboutGoal && dailyGoal > 0 && todayContributions < dailyGoal) {
+    const existing = await prisma.notification.findFirst({
+      where: {
+        userId: session.user.id,
+        type: "goal_not_met",
+        createdAt: {
+          gte: new Date(new Date().setHours(0, 0, 0, 0)),
+        },
+      },
+    });
+    if (!existing) {
+      await prisma.notification.create({
+        data: {
+          userId: session.user.id,
+          type: "goal_not_met",
+          message: `Ты ещё не выполнил дневную норму (${todayContributions}/${dailyGoal}). Есть время до конца дня!`,
+        },
+      });
+    }
+  }
 
   return (
     <main className="p-6 max-w-6xl mx-auto">
@@ -55,6 +77,7 @@ export default async function DashboardPage() {
           </h1>
         </div>
         <div className="flex gap-2">
+          <NotificationBell />
           <a
             href="/goals"
             className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
@@ -140,16 +163,16 @@ function calculateStreak(
 }
 
 function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: number): string {
-  // Нет цели или цель 0 — советы без дневной нормы
+  // Нет цели или цель 0 - советы без дневной нормы
   if (!dailyGoal) {
     if (streak === 0 && todayContributions === 0) {
-      return "Сегодня новый день! Сделай первый шаг — один коммит запустит твой стрик.";
+      return "Сегодня новый день! Сделай первый шаг - один коммит запустит твой стрик.";
     }
     if (streak === 0 && todayContributions > 0) {
       return "Отлично, активность есть! Продолжай, чтобы начать стрик.";
     }
     if (streak === 1) {
-      return "Первый день стрика! Завтра будет второй — ты сможешь!";
+      return "Первый день стрика! Завтра будет второй - ты сможешь!";
     }
     if (streak >= 2 && streak <= 6) {
       return `Стрик ${streak} дней подряд! Ты набираешь обороты, не сдавайся.`;
@@ -157,7 +180,7 @@ function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: n
     if (streak >= 7 && streak <= 30) {
       return `Огонь! ${streak} дней без перерыва. Ты входишь в ритм профи.`;
     }
-    return `🔥 ${streak} дней! Ты — машина продуктивности.`;
+    return `🔥 ${streak} дней! Ты - машина продуктивности.`;
   }
 
   // Когда дневная цель задана
@@ -166,14 +189,14 @@ function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: n
 
   if (todayContributions >= dailyGoal) {
     return streak > 0
-      ? `🎉 Норма выполнена на ${progressPercent}%! И стрик ${streak} дней — ты супергерой.`
+      ? `🎉 Норма выполнена на ${progressPercent}%! И стрик ${streak} дней - ты супергерой.`
       : `✅ Дневная норма выполнена на ${progressPercent}%! Отличная работа.`;
   }
 
   if (progressPercent >= 50) {
     return streak > 0
       ? `Ты прошёл ${progressPercent}% цели (${todayContributions}/${dailyGoal}) при стрике ${streak} дней. Осталось чуть-чуть!`
-      : `Уже ${progressPercent}% нормы. Осталось ${remaining} действий — дожми сегодня!`;
+      : `Уже ${progressPercent}% нормы. Осталось ${remaining} действий - дожми сегодня!`;
   }
 
   if (todayContributions > 0) {
