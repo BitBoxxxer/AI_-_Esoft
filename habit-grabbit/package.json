@@ -1,12 +1,13 @@
 {
   "name": "habit-grabbit",
-  "version": "0.1.0",
+  "version": "4.0.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
