@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 
@@ -17,16 +17,17 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
 
+  
+  const loadProfile = useCallback(async () => {
+    const res = await fetch("/api/user/profile");
+    if (res.ok) setProfile(await res.json());
+  }, []); // пустой массив зависимостей, т.к. fetch и setProfile стабильны
+
   useEffect(() => {
     if (status === "unauthenticated") redirect("/login");
     if (status === "authenticated") loadProfile();
-  }, [status]);
-
-  const loadProfile = async () => {
-    const res = await fetch("/api/user/profile");
-    if (res.ok) setProfile(await res.json());
-  };
-
+  }, [status, loadProfile]);
+  
   const toggleNotify = async () => {
     if (!profile) return;
     setLoading(true);
@@ -48,6 +49,7 @@ export default function ProfilePage() {
 
       <div className="bg-gray-900 rounded-xl p-6 max-w-md">
         <div className="flex items-center gap-4 mb-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           {profile.image && (
             <img src={profile.image} alt="avatar" className="w-16 h-16 rounded-full border-2 border-blue-600" />
           )}

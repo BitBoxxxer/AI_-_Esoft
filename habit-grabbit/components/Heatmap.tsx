@@ -68,7 +68,6 @@ export default function Heatmap({
     weeks.push(week);
   }
 
-  const dayLabels = ["Пн", "", "Ср", "", "Пт", "", ""];
   const monthNames = [
     "Янв", "Фев", "Мар", "Апр", "Май", "Июн",
     "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек",

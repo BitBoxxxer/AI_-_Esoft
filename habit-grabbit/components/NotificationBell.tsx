@@ -1,6 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 
 interface Notification {
   id: string;
@@ -12,18 +11,17 @@ interface Notification {
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
-  const router = useRouter();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     const res = await fetch("/api/notifications?unread=true");
     if (res.ok) setNotifications(await res.json());
-  };
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchNotifications]);
 
   const markAllRead = async () => {
     await fetch("/api/notifications", { method: "PATCH" });

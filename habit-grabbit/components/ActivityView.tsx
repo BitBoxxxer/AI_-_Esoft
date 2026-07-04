@@ -24,9 +24,9 @@ export default function ActivityView({
       const res = await fetch(`/api/stats?days=${days}`);
       if (res.ok) {
         const data = await res.json();
-        const parsed = data.map((d: any) => ({
+        const parsed = data.map((d: Record<string, unknown>) => ({
           ...d,
-          date: new Date(d.date),
+          date: new Date(d.date as string),
         }));
         setStats(parsed);
       }

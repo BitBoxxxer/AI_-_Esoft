@@ -46,7 +46,7 @@ export function aggregateStats(events: GitHubEvent[]): DailyStatsData[] {
 
     if (event.type === "PushEvent") {
       // Учитываем количество коммитов в пуше
-      day.commits += (event as any).payload?.commits?.length ?? 1;
+      day.commits += (event as { payload?: { commits?: unknown[] } }).payload?.commits?.length ?? 1;
     } else if (event.type === "PullRequestEvent") {
       day.prs += 1;
     } else if (event.type === "IssuesEvent") {
