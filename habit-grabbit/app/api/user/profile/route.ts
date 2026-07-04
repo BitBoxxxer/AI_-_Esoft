@@ -18,7 +18,7 @@ export async function PATCH(request: Request) {
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
   const body = await request.json();
-  const updateData: any = {};
+  const updateData: Record<string, unknown> = {};
   if (typeof body.dailyGoal === "number") updateData.dailyGoal = body.dailyGoal;
   if (typeof body.notifyAboutGoal === "boolean") updateData.notifyAboutGoal = body.notifyAboutGoal;
 

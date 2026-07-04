@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   return Response.json(notifications);
 }
 
-export async function PATCH(request: Request) {
+export async function PATCH(_request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 

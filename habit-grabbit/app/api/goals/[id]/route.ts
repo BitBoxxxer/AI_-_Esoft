@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 
-// Обновить цель (отметить выполнение или изменить поля)
+// + цель (отметить выполнение или изменить поля)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -10,13 +10,13 @@ export async function PATCH(
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
-  const { id } = await params; // получаем id из Promise
+  const { id } = await params; // promise
   const goal = await prisma.goal.findUnique({ where: { id } });
   if (!goal || goal.userId !== session.user.id)
     return new Response("Forbidden", { status: 403 });
 
   const body = await request.json();
-  const updateData: any = {};
+  const updateData: Record<string, unknown> = {};
 
   if (typeof body.completed === "boolean") updateData.completed = body.completed;
   if (body.title) updateData.title = body.title;
@@ -25,7 +25,7 @@ export async function PATCH(
     updateData.deadline = body.deadline ? new Date(body.deadline) : null;
   if (body.githubIssueUrl !== undefined) updateData.githubIssueUrl = body.githubIssueUrl;
   if (body.columnId !== undefined) updateData.columnId = body.columnId;
-  // При желании можно добавить targetCommits и т.д.
+  //TODO: добавить targetCommits и т.д.
 
   const updated = await prisma.goal.update({
     where: { id },
@@ -34,7 +34,7 @@ export async function PATCH(
   return Response.json(updated);
 }
 
-// Удалить цель
+// - цель
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

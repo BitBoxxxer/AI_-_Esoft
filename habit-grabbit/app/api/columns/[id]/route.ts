@@ -16,7 +16,7 @@ export async function PATCH(
     return new Response("Forbidden", { status: 403 });
 
   const { title, order } = await request.json();
-  const update: any = {};
+  const update: Record<string, unknown> = {};
   if (title !== undefined) update.title = title;
   if (order !== undefined) update.order = order;
 
