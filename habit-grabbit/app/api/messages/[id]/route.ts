@@ -2,16 +2,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> } ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
+  const { id } = await params; //promise
   const { content } = await request.json();
   if (!content || typeof content !== "string") return new Response("Invalid content", { status: 400 });
 
   // Находим сообщение и проверяем, что оно принадлежит пользователю и роль user
   const message = await prisma.chatMessage.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { conversation: true },
   });
   if (!message || message.userId !== session.user.id || message.role !== "user") {
@@ -20,7 +21,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
   // Обновляем содержимое
   await prisma.chatMessage.update({
-    where: { id: params.id },
+    where: { id },
     data: { content },
   });
 
