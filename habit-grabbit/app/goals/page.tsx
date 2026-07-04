@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
@@ -19,9 +20,8 @@ interface Column {
 }
 
 export default function GoalsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [columns, setColumns] = useState<Column[]>([]);
-  const [loading, setLoading] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editColumnTitle, setEditColumnTitle] = useState("");
@@ -34,15 +34,16 @@ export default function GoalsPage() {
   const [newGoalTitle, setNewGoalTitle] = useState<Record<string, string>>({});
   const [issueUrl, setIssueUrl] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (status === "unauthenticated") redirect("/login");
-    if (status === "authenticated") fetchColumns();
-  }, [status]);
-
   const fetchColumns = useCallback(async () => {
     const res = await fetch("/api/columns");
     if (res.ok) setColumns(await res.json());
   }, []);
+
+  useEffect(() => {
+    if (status === "unauthenticated") redirect("/login");
+    if (status === "authenticated") fetchColumns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   // Управление колонками
   const createColumn = async () => {

@@ -2,11 +2,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: Request) {
+export async function GET(_req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
-  const { searchParams } = new URL(request.url);
+  const { searchParams } = new URL(_req.url);
   const onlyUnread = searchParams.get("unread") === "true";
 
   const notifications = await prisma.notification.findMany({
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   return Response.json(notifications);
 }
 
-export async function PATCH(_request: Request) {
+export async function PATCH() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 

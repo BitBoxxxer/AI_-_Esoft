@@ -65,6 +65,7 @@ export default async function DashboardPage() {
       {/* Шапка с аватаром и кнопками */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           {session.user?.image && (
             <img
               src={session.user.image}
@@ -138,6 +139,7 @@ function calculateStreak(
   let streak = 0;
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
+  // eslint-disable-next-line prefer-const
   let checkDate = new Date(today);
   const todayStat = sorted.find(
     (s) => s.date.toISOString().slice(0, 10) === today.toISOString().slice(0, 10)

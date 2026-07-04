@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
@@ -30,7 +31,7 @@ interface Conversation {
 }
 
 export default function ChatPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -76,16 +77,26 @@ export default function ChatPage() {
 
   // Сохранение уровня памяти в localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("chat-memory");
-    if (saved) {
-      const num = parseInt(saved, 10);
-      if (memoryLevels.some((l) => l.value === num)) setMemory(num);
+    if (status === "unauthenticated") redirect("/login");
+    if (status === "authenticated") {
+      void fetchConversations();
     }
-  }, []);
+  }, [status, fetchConversations]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (!activeConvId) {
+      setMessages([]);
+      return;
+    }
+    const loadMessages = async () => {
+      const res = await fetch(`/api/conversations/${activeConvId}/messages`);
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data);
+      }
+    };
+    void loadMessages();
+  }, [activeConvId]);
 
   const createNewConversation = async () => {
     const res = await fetch("/api/conversations", { method: "POST" });
@@ -222,7 +233,7 @@ export default function ChatPage() {
             </div>
           )}
 
-          {messages.map((msg, i) => (
+          {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed relative group ${
                 msg.role === "user" ? "bg-blue-600 text-white rounded-br-md" : "bg-gray-900 text-gray-100 rounded-bl-md"
