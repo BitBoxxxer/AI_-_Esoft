@@ -5,12 +5,13 @@ import { prisma } from "@/lib/prisma";
 // Обновить цель (отметить выполнение или изменить поля)
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
-  const goal = await prisma.goal.findUnique({ where: { id: params.id } });
+  const { id } = await params; // получаем id из Promise
+  const goal = await prisma.goal.findUnique({ where: { id } });
   if (!goal || goal.userId !== session.user.id)
     return new Response("Forbidden", { status: 403 });
 
@@ -27,7 +28,7 @@ export async function PATCH(
   // При желании можно добавить targetCommits и т.д.
 
   const updated = await prisma.goal.update({
-    where: { id: params.id },
+    where: { id },
     data: updateData,
   });
   return Response.json(updated);
@@ -36,15 +37,16 @@ export async function PATCH(
 // Удалить цель
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
-  const goal = await prisma.goal.findUnique({ where: { id: params.id } });
+  const { id } = await params;
+  const goal = await prisma.goal.findUnique({ where: { id } });
   if (!goal || goal.userId !== session.user.id)
     return new Response("Forbidden", { status: 403 });
 
-  await prisma.goal.delete({ where: { id: params.id } });
+  await prisma.goal.delete({ where: { id } });
   return new Response(null, { status: 204 });
 }

@@ -5,12 +5,13 @@ import { prisma } from "@/lib/prisma";
 // Обновить название колонки
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
-  const column = await prisma.goalColumn.findUnique({ where: { id: params.id } });
+  const { id } = await params; // получаем id из Promise
+  const column = await prisma.goalColumn.findUnique({ where: { id } });
   if (!column || column.userId !== session.user.id)
     return new Response("Forbidden", { status: 403 });
 
@@ -20,27 +21,27 @@ export async function PATCH(
   if (order !== undefined) update.order = order;
 
   const updated = await prisma.goalColumn.update({
-    where: { id: params.id },
+    where: { id },
     data: update,
   });
   return Response.json(updated);
 }
 
-// Удалить колонку (цели без колонки станут не видны, но мы перенесём их в "без колонки"?)
-// Лучше удалить все цели колонки или перенести в другую. Сделаем предупреждение на клиенте.
+// Удаление колонки
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
 
-  const column = await prisma.goalColumn.findUnique({ where: { id: params.id } });
+  const { id } = await params;
+  const column = await prisma.goalColumn.findUnique({ where: { id } });
   if (!column || column.userId !== session.user.id)
     return new Response("Forbidden", { status: 403 });
 
-  // Удалим цели этой колонки
-  await prisma.goal.deleteMany({ where: { columnId: params.id } });
-  await prisma.goalColumn.delete({ where: { id: params.id } });
+  // удалить цели
+  await prisma.goal.deleteMany({ where: { columnId: id } });
+  await prisma.goalColumn.delete({ where: { id } });
   return new Response(null, { status: 204 });
 }
