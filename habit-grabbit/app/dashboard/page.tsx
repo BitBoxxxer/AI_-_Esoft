@@ -109,7 +109,7 @@ export default async function DashboardPage() {
           <p className="text-sm text-gray-300">Совет дня</p>
           <p className="text-white mt-1 text-sm">{getDailyAdvice(streak, todayContributions, dailyGoal)}</p>
           <p className="text-gray-400 text-xs mt-2">
-            ⚡ Персональный AI-совет появится позже
+            Советы от AI появятся позже -_-
           </p>
         </div>
       </div>
@@ -166,21 +166,21 @@ function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: n
   // Нет цели или цель 0 - советы без дневной нормы
   if (!dailyGoal) {
     if (streak === 0 && todayContributions === 0) {
-      return "Сегодня новый день! Сделай первый шаг - один коммит запустит твой стрик.";
+      return "Сегодня новый день! Сделай первый шаг, один коммит запустит твой страйк.";
     }
     if (streak === 0 && todayContributions > 0) {
-      return "Отлично, активность есть! Продолжай, чтобы начать стрик.";
+      return "Отлично, активность есть! Продолжай чтобы начать стрик.";
     }
     if (streak === 1) {
       return "Первый день стрика! Завтра будет второй - ты сможешь!";
     }
     if (streak >= 2 && streak <= 6) {
-      return `Стрик ${streak} дней подряд! Ты набираешь обороты, не сдавайся.`;
+      return `Стрик ${streak} дней подряд! Вот это да, не сдавайся.`;
     }
     if (streak >= 7 && streak <= 30) {
       return `Огонь! ${streak} дней без перерыва. Ты входишь в ритм профи.`;
     }
-    return `🔥 ${streak} дней! Ты - машина продуктивности.`;
+    return `🔥 ${streak} дней! МАШИНА.`;
   }
 
   // Когда дневная цель задана
@@ -189,14 +189,14 @@ function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: n
 
   if (todayContributions >= dailyGoal) {
     return streak > 0
-      ? `🎉 Норма выполнена на ${progressPercent}%! И стрик ${streak} дней - ты супергерой.`
-      : `✅ Дневная норма выполнена на ${progressPercent}%! Отличная работа.`;
+      ? `GOOD Норма выполнена на ${progressPercent}%! И страйк ${streak} дней - ты крут.`
+      : `Дневная норма выполнена на ${progressPercent}%!`;
   }
 
   if (progressPercent >= 50) {
     return streak > 0
-      ? `Ты прошёл ${progressPercent}% цели (${todayContributions}/${dailyGoal}) при стрике ${streak} дней. Осталось чуть-чуть!`
-      : `Уже ${progressPercent}% нормы. Осталось ${remaining} действий - дожми сегодня!`;
+      ? `Ты прошёл ${progressPercent}% цели (${todayContributions}/${dailyGoal}) при стрике ${streak} дней. ДОЖИМАЙ`
+      : `Уже ${progressPercent}% нормы. Осталось ${remaining} действий - ДОЖИМАЙ МАШИНА`;
   }
 
   if (todayContributions > 0) {
