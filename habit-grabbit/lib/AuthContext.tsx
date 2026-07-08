@@ -32,15 +32,35 @@ const AuthContext = createContext<AuthContextValue>({
   refresh: async () => {},
 });
 
+async function fetchMe(retries = 5): Promise<AuthUser | null> {
+  for (let i = 0; i < retries; i++) {
+    const res = await apiFetch("/auth/me");
+
+    if (res.ok) return res.json();
+    if (res.status === 401 || res.status === 404) return null;
+
+    // 503 = база временно недоступна, повторяем через 1 секунду (это продолжение ебли с postgreSQL)
+    if (res.status === 503 && i < retries - 1) {
+      console.warn(`[AuthContext] /auth/me returned 503, retry ${i + 1}/${retries}`);
+      await new Promise((r) => setTimeout(r, 1000));
+      continue;
+    }
+
+    return null;
+  }
+  return null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
 
   const refresh = useCallback(async () => {
+    setStatus("loading");
     try {
-      const res = await apiFetch("/auth/me");
-      if (res.ok) {
-        setUser(await res.json());
+      const userData = await fetchMe();
+      if (userData) {
+        setUser(userData);
         setStatus("authenticated");
       } else {
         setUser(null);
@@ -63,7 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Аналог useSession() из next-auth
 export function useAuth() {
   return useContext(AuthContext);
 }

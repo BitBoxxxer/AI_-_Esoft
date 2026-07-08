@@ -5,6 +5,7 @@ import {
   GithubProfile,
 } from "../utils/github";
 import { signJwt } from "../utils/jwt";
+import { withRetry } from "../utils/prismaRetry";
 
 class AuthService {
   getGithubAuthorizeUrl(state: string) {
@@ -22,98 +23,101 @@ class AuthService {
     const profile: GithubProfile = await fetchGithubProfile(accessToken);
 
     const providerAccountId = String(profile.id);
+    const emailFallback = `github-${providerAccountId}@no-email.local`;
 
-    // Ищем существующую привязку GitHub-аккаунта
-    const existingAccount = await prisma.account.findUnique({
-      where: {
-        provider_providerAccountId: {
-          provider: "github",
-          providerAccountId,
+    const existingAccount = await withRetry(() =>
+      prisma.account.findUnique({
+        where: {
+          provider_providerAccountId: {
+            provider: "github",
+            providerAccountId,
+          },
         },
-      },
-    });
+      })
+    );
 
-    let userId: string;
+    let user: { id: string; email: string | null; name: string | null };
 
     if (existingAccount) {
-      userId = existingAccount.userId;
-
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          name: profile.name ?? undefined,
-          email: profile.email ?? undefined,
-          image: profile.avatar_url,
-          githubLogin: profile.login,
-        },
-      });
-
-      await prisma.account.update({
-        where: { id: existingAccount.id },
-        data: { access_token: accessToken },
-      });
+      user = await withRetry(() =>
+        prisma.user.update({
+          where: { id: existingAccount.userId },
+          data: {
+            name: profile.name ?? undefined,
+            email: profile.email ?? undefined,
+            image: profile.avatar_url,
+            githubLogin: profile.login,
+          },
+          select: { id: true, email: true, name: true },
+        })
+      );
     } else {
-      // Пытаемся связать по email, если аккаунт уже существовал по другой причине
-      const user = await prisma.user.upsert({
-        where: { email: profile.email ?? `github-${providerAccountId}@no-email.local` },
-        update: {
-          name: profile.name ?? undefined,
-          image: profile.avatar_url,
-          githubLogin: profile.login,
-        },
-        create: {
-          email: profile.email ?? `github-${providerAccountId}@no-email.local`,
-          name: profile.name,
-          image: profile.avatar_url,
-          githubLogin: profile.login,
-        },
-      });
+      const upserted = await withRetry(() =>
+        prisma.user.upsert({
+          where: { email: profile.email ?? emailFallback },
+          update: {
+            name: profile.name ?? undefined,
+            image: profile.avatar_url,
+            githubLogin: profile.login,
+          },
+          create: {
+            email: profile.email ?? emailFallback,
+            name: profile.name,
+            image: profile.avatar_url,
+            githubLogin: profile.login,
+          },
+          select: { id: true, email: true, name: true },
+        })
+      );
 
-      userId = user.id;
+      await withRetry(() =>
+        prisma.account.create({
+          data: {
+            userId: upserted.id,
+            type: "oauth",
+            provider: "github",
+            providerAccountId,
+            access_token: accessToken,
+          },
+        })
+      );
 
-      await prisma.account.create({
-        data: {
-          userId,
-          type: "oauth",
-          provider: "github",
-          providerAccountId,
-          access_token: accessToken,
-        },
-      });
+      user = upserted;
     }
 
-    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
-
     const token = signJwt({ id: user.id, email: user.email, name: user.name });
-
     return { token, user, login: profile.login };
   }
 
   async getMe(userId: string) {
-    return prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        githubLogin: true,
-        dailyGoal: true,
-        notifyAboutGoal: true,
-      },
-    });
+    return withRetry(() =>
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          githubLogin: true,
+          dailyGoal: true,
+          notifyAboutGoal: true,
+        },
+      })
+    );
   }
 
-  // Достаём login и access_token GitHub-аккаунта пользователя (нужно для /stats/refresh)
   async getGithubAccount(userId: string) {
     const [user, account] = await Promise.all([
-      prisma.user.findUnique({ where: { id: userId } }),
-      prisma.account.findFirst({ where: { userId, provider: "github" } }),
+      withRetry(() => prisma.user.findUnique({ where: { id: userId } })),
+      withRetry(() =>
+        prisma.account.findFirst({ where: { userId, provider: "github" } })
+      ),
     ]);
     if (!account || !account.access_token) return null;
 
-    // login храним в User.githubLogin; на всякий случай (старые записи) добираем из GitHub API
-    const login = user?.githubLogin || (await fetchGithubProfile(account.access_token)).login;
+    const login =
+      user?.githubLogin ||
+      (await fetchGithubProfile(account.access_token)).login;
     return { login, accessToken: account.access_token };
   }
 }
