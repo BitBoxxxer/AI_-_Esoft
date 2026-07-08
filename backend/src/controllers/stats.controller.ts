@@ -9,6 +9,11 @@ class StatsController {
     return res.json(stats);
   }
 
+  async getDashboard(req: AuthRequest, res: Response) {
+    const data = await statsService.getDashboard(req.user!.id);
+    return res.json(data);
+  }
+
   async refreshStats(req: AuthRequest, res: Response) {
     try {
       const count = await statsService.refreshStats(req.user!.id);

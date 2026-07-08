@@ -1,7 +1,12 @@
 "use client";
 import { useState } from "react";
+import { apiFetch } from "@/lib/api";
 
-export default function RefreshStatsButton() {
+interface RefreshStatsButtonProps {
+  onRefreshed?: () => void;
+}
+
+export default function RefreshStatsButton({ onRefreshed }: RefreshStatsButtonProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -9,11 +14,14 @@ export default function RefreshStatsButton() {
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch("/api/stats/refresh", { method: "POST" });
+      const res = await apiFetch("/api/stats/refresh", { method: "POST" });
       if (res.ok) {
         setMessage("Статистика обновлена!");
-        // Можно перезагрузить страницу для отображения новых данных
-        window.location.reload();
+        if (onRefreshed) {
+          onRefreshed();
+        } else {
+          window.location.reload();
+        }
       } else {
         setMessage("Ошибка обновления");
       }

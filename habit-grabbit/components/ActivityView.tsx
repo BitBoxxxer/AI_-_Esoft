@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Heatmap from "./Heatmap";
+import { apiFetch } from "@/lib/api";
 import type { DailyStats } from "@/types";
 
 const periods = [
@@ -21,7 +22,7 @@ export default function ActivityView({
   const fetchStats = async (days: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/stats?days=${days}`);
+      const res = await apiFetch(`/api/stats?days=${days}`);
       if (res.ok) {
         const data = await res.json();
         const parsed = data.map((d: Record<string, unknown>) => ({

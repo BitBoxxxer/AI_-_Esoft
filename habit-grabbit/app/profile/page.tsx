@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { apiFetch } from "@/lib/api";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 interface UserProfile {
   id: string;
@@ -14,27 +14,25 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { status } = useSession();
+  const status = useRequireAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
 
   
   const loadProfile = useCallback(async () => {
-    const res = await fetch("/api/user/profile");
+    const res = await apiFetch("/api/user/profile");
     if (res.ok) setProfile(await res.json());
   }, []); // пустой массив зависимостей, т.к. fetch и setProfile стабильны
 
   useEffect(() => {
-    if (status === "unauthenticated") redirect("/login");
     if (status === "authenticated") loadProfile();
   }, [status, loadProfile]);
   
   const toggleNotify = async () => {
     if (!profile) return;
     setLoading(true);
-    const res = await fetch("/api/user/profile", {
+    const res = await apiFetch("/api/user/profile", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ notifyAboutGoal: !profile.notifyAboutGoal }),
     });
     if (res.ok) setProfile(await res.json());

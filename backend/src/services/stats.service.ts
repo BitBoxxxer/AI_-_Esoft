@@ -51,6 +51,58 @@ class StatsService {
 
     return days.length;
   }
+
+  // Данные для главной страницы: профиль + статистика за 365 дней +
+  // (при необходимости) создание уведомления "норма не выполнена"
+  async getDashboard(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        githubLogin: true,
+        dailyGoal: true,
+        notifyAboutGoal: true,
+      },
+    });
+
+    const stats = await prisma.dailyStats.findMany({
+      where: { userId },
+      orderBy: { date: "desc" },
+      take: 365,
+    });
+
+    const dailyGoal = user?.dailyGoal ?? 0;
+    const notifyAboutGoal = user?.notifyAboutGoal ?? true;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStats = stats.find(
+      (s) => s.date.toISOString().slice(0, 10) === todayStr
+    );
+    const todayContributions = todayStats?.contributions ?? 0;
+
+    if (notifyAboutGoal && dailyGoal > 0 && todayContributions < dailyGoal) {
+      const existing = await prisma.notification.findFirst({
+        where: {
+          userId,
+          type: "goal_not_met",
+          createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        },
+      });
+      if (!existing) {
+        await prisma.notification.create({
+          data: {
+            userId,
+            type: "goal_not_met",
+            message: `Ты ещё не выполнил дневную норму (${todayContributions}/${dailyGoal}). Есть время до конца дня!`,
+          },
+        });
+      }
+    }
+
+    return { user, stats, todayContributions };
+  }
 }
 
 export default new StatsService();

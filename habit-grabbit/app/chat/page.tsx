@@ -1,8 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { apiFetch } from "@/lib/api";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 import SignOutButton from "@/components/SignOutButton";
 
 const quickActions = [
@@ -31,7 +31,7 @@ interface Conversation {
 }
 
 export default function ChatPage() {
-  const { status } = useSession();
+  const status = useRequireAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -44,7 +44,7 @@ export default function ChatPage() {
 
   // Загрузка списка диалогов
   const fetchConversations = useCallback(async () => {
-    const res = await fetch("/api/conversations");
+    const res = await apiFetch("/api/conversations");
     if (res.ok) {
       const data = await res.json();
       setConversations(data);
@@ -55,7 +55,6 @@ export default function ChatPage() {
   }, [activeConvId]);
 
   useEffect(() => {
-    if (status === "unauthenticated") redirect("/login");
     if (status === "authenticated") fetchConversations();
   }, [status, fetchConversations]);
 
@@ -66,7 +65,7 @@ export default function ChatPage() {
       return;
     }
     const loadMessages = async () => {
-      const res = await fetch(`/api/conversations/${activeConvId}/messages`);
+      const res = await apiFetch(`/api/conversations/${activeConvId}/messages`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data);
@@ -75,31 +74,8 @@ export default function ChatPage() {
     loadMessages();
   }, [activeConvId]);
 
-  // Сохранение уровня памяти в localStorage
-  useEffect(() => {
-    if (status === "unauthenticated") redirect("/login");
-    if (status === "authenticated") {
-      void fetchConversations();
-    }
-  }, [status, fetchConversations]);
-
-  useEffect(() => {
-    if (!activeConvId) {
-      setMessages([]);
-      return;
-    }
-    const loadMessages = async () => {
-      const res = await fetch(`/api/conversations/${activeConvId}/messages`);
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data);
-      }
-    };
-    void loadMessages();
-  }, [activeConvId]);
-
   const createNewConversation = async () => {
-    const res = await fetch("/api/conversations", { method: "POST" });
+    const res = await apiFetch("/api/conversations", { method: "POST" });
     if (res.ok) {
       const conv = await res.json();
       setConversations((prev) => [conv, ...prev]);
@@ -116,7 +92,7 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await apiFetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: messageText, memory, conversationId: activeConvId }),
@@ -154,7 +130,7 @@ export default function ChatPage() {
   const saveEdit = async () => {
     if (!editingId || !editContent.trim()) return;
     try {
-      const res = await fetch(`/api/messages/${editingId}`, {
+      const res = await apiFetch(`/api/messages/${editingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: editContent }),

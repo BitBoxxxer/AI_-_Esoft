@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "@/lib/api";
 
 interface Notification {
   id: string;
@@ -14,7 +15,7 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
-    const res = await fetch("/api/notifications?unread=true");
+    const res = await apiFetch("/api/notifications?unread=true");
     if (res.ok) setNotifications(await res.json());
   }, []);
 
@@ -25,7 +26,7 @@ export default function NotificationBell() {
   }, [fetchNotifications]);
 
   const markAllRead = async () => {
-    await fetch("/api/notifications", { method: "PATCH" });
+    await apiFetch("/api/notifications", { method: "PATCH" });
     setNotifications([]);
   };
 

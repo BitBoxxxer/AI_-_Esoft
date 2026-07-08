@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Habit GRabbit — Frontend (Next.js)
 
-## Getting Started
+Это чисто UI-часть проекта. Вся авторизация и данные теперь приходят с
+отдельного Express-бэкенда (папка `../backend`).
 
-First, run the development server:
+## Настройка
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Убедитесь, что backend запущен (см. `backend/README.md`), обычно на
+   `http://localhost:4000`.
+2. В `.env.local` укажите адрес бэкенда:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   ```
+   NEXT_PUBLIC_API_URL="http://localhost:4000"
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Установка и запуск:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-## Learn More
+   Приложение будет на `http://localhost:3000`.
 
-To learn more about Next.js, take a look at the following resources:
+## Как теперь устроена авторизация
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- next-auth больше не используется.
+- Кнопка "Войти через GitHub" (`/login`) ведёт на
+  `${NEXT_PUBLIC_API_URL}/auth/github` — это редирект на GitHub OAuth,
+  который делает backend.
+- После логина backend ставит httpOnly cookie `token` и редиректит обратно
+  на `${FRONTEND_URL}/dashboard` (см. `backend/.env`).
+- `lib/AuthContext.tsx` — замена `SessionProvider`/`useSession`: при монтировании
+  дергает `GET /auth/me` на бэкенде и хранит пользователя в React-контексте.
+- `lib/useRequireAuth.ts` — замена `middleware.ts`: если `/auth/me` вернул 401,
+  редиректит на `/login`. Используется в защищённых страницах
+  (`dashboard`, `goals`, `chat`, `profile`).
+- `lib/api.ts` — обёртка над `fetch` с `credentials: "include"`, чтобы cookie
+  всегда уходила на бэкенд (в том числе на другой домен/порт).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Продакшн / деплой
 
-## Deploy on Vercel
+Т.к. фронтенд и бэкенд теперь отдельные сервисы:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Frontend можно деплоить на Vercel как обычно.
+- Backend **нельзя** деплоить на Vercel как serverless-функцию, если чат
+  использует локальный Ollama — деплойте его на VPS/Render/Railway (см.
+  `backend/README.md`).
+- В проде backend должен ставить cookie с `sameSite: "none"; secure: true`
+  (уже реализовано в `auth.controller.ts`), а `FRONTEND_URL`/`NEXT_PUBLIC_API_URL`
+  должны указывать на реальные HTTPS-адреса.

@@ -1,5 +1,5 @@
 "use client";
-import { signIn } from "next-auth/react";
+import { githubLoginUrl } from "@/lib/api";
 
 export default function LoginPage() {
   return (
@@ -7,12 +7,12 @@ export default function LoginPage() {
       <div className="rounded-xl bg-white p-8 shadow-lg text-center">
         <h1 className="text-2xl font-bold mb-4">Habit GRabbit</h1>
         <p className="text-gray-600 mb-6">Войди через GitHub, чтобы начать</p>
-        <button
-          onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
-          className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition"
+        <a
+          href={githubLoginUrl()}
+          className="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition"
         >
           Войти через GitHub
-        </button>
+        </a>
       </div>
     </div>
   );

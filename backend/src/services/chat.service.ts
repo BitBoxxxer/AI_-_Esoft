@@ -35,7 +35,7 @@ class ChatService {
 
     const reply = await generateAIResponse(aiMessages);
 
-    await prisma.chatMessage.create({
+    const userMessage = await prisma.chatMessage.create({
       data: { userId, conversationId, role: "user", content: message },
     });
 
@@ -48,7 +48,7 @@ class ChatService {
       data: { updatedAt: new Date() },
     });
 
-    return { reply, messageId: assistantMessage.id };
+    return { reply, userMessageId: userMessage.id, messageId: assistantMessage.id };
   }
 }
 

@@ -44,6 +44,7 @@ class AuthService {
           name: profile.name ?? undefined,
           email: profile.email ?? undefined,
           image: profile.avatar_url,
+          githubLogin: profile.login,
         },
       });
 
@@ -58,11 +59,13 @@ class AuthService {
         update: {
           name: profile.name ?? undefined,
           image: profile.avatar_url,
+          githubLogin: profile.login,
         },
         create: {
           email: profile.email ?? `github-${providerAccountId}@no-email.local`,
           name: profile.name,
           image: profile.avatar_url,
+          githubLogin: profile.login,
         },
       });
 
@@ -94,6 +97,7 @@ class AuthService {
         name: true,
         email: true,
         image: true,
+        githubLogin: true,
         dailyGoal: true,
         notifyAboutGoal: true,
       },
@@ -102,14 +106,15 @@ class AuthService {
 
   // Достаём login и access_token GitHub-аккаунта пользователя (нужно для /stats/refresh)
   async getGithubAccount(userId: string) {
-    const account = await prisma.account.findFirst({
-      where: { userId, provider: "github" },
-    });
+    const [user, account] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.account.findFirst({ where: { userId, provider: "github" } }),
+    ]);
     if (!account || !account.access_token) return null;
 
-    // login мы не храним отдельно в БД, поэтому забираем его свежим из GitHub API
-    const profile = await fetchGithubProfile(account.access_token);
-    return { login: profile.login, accessToken: account.access_token };
+    // login храним в User.githubLogin; на всякий случай (старые записи) добираем из GitHub API
+    const login = user?.githubLogin || (await fetchGithubProfile(account.access_token)).login;
+    return { login, accessToken: account.access_token };
   }
 }
 

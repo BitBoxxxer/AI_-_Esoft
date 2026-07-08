@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api";
 
 const presets = [
   { label: "Лёгкая", value: 1 },
@@ -10,24 +10,22 @@ const presets = [
 
 interface GoalSetterProps {
   currentGoal: number;
-  onUpdated?: () => void; // опционально, но будем использовать router.refresh
+  onUpdated?: () => void;
 }
 
-export default function GoalSetter({ currentGoal }: GoalSetterProps) {
-  const [customValue, setCustomValue] = useState(currentGoal || "");
+export default function GoalSetter({ currentGoal, onUpdated }: GoalSetterProps) {
+  const [customValue, setCustomValue] = useState<number | string>(currentGoal || "");
   const [saving, setSaving] = useState(false);
-  const router = useRouter();
 
   const saveGoal = async (goal: number) => {
     setSaving(true);
     try {
-      const res = await fetch("/api/user/goal", {
+      const res = await apiFetch("/api/user/goal", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dailyGoal: goal }),
       });
       if (res.ok) {
-        router.refresh(); // обновим серверный компонент дашборда
+        onUpdated?.();
       }
     } catch (err) {
       console.error(err);
@@ -42,7 +40,6 @@ export default function GoalSetter({ currentGoal }: GoalSetterProps) {
         {currentGoal > 0 ? "Изменить дневную норму" : "Задать дневную норму"}
       </p>
 
-      {/* Предустановленные сложности */}
       <div className="flex gap-2 mb-3">
         {presets.map((p) => (
           <button
@@ -60,7 +57,6 @@ export default function GoalSetter({ currentGoal }: GoalSetterProps) {
         ))}
       </div>
 
-      {/* Ручной ввод */}
       <div className="flex items-center gap-2">
         <input
           type="number"

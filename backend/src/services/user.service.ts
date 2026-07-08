@@ -5,6 +5,7 @@ const PROFILE_SELECT = {
   name: true,
   email: true,
   image: true,
+  githubLogin: true,
   dailyGoal: true,
   notifyAboutGoal: true,
 } as const;

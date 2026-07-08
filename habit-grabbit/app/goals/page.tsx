@@ -1,8 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { apiFetch } from "@/lib/api";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 
 interface Goal {
   id: string;
@@ -20,7 +20,7 @@ interface Column {
 }
 
 export default function GoalsPage() {
-  const { status } = useSession();
+  const status = useRequireAuth();
   const [columns, setColumns] = useState<Column[]>([]);
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
@@ -35,12 +35,11 @@ export default function GoalsPage() {
   const [issueUrl, setIssueUrl] = useState<Record<string, string>>({});
 
   const fetchColumns = useCallback(async () => {
-    const res = await fetch("/api/columns");
+    const res = await apiFetch("/api/columns");
     if (res.ok) setColumns(await res.json());
   }, []);
 
   useEffect(() => {
-    if (status === "unauthenticated") redirect("/login");
     if (status === "authenticated") fetchColumns();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
@@ -48,7 +47,7 @@ export default function GoalsPage() {
   // Управление колонками
   const createColumn = async () => {
     if (!newColumnTitle.trim()) return;
-    await fetch("/api/columns", {
+    await apiFetch("/api/columns", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: newColumnTitle }),
@@ -63,7 +62,7 @@ export default function GoalsPage() {
   };
   const saveColumnTitle = async (id: string) => {
     if (!editColumnTitle.trim()) return;
-    await fetch(`/api/columns/${id}`, {
+    await apiFetch(`/api/columns/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: editColumnTitle }),
@@ -73,7 +72,7 @@ export default function GoalsPage() {
   };
 
   const deleteColumn = async (id: string) => {
-    await fetch(`/api/columns/${id}`, { method: "DELETE" });
+    await apiFetch(`/api/columns/${id}`, { method: "DELETE" });
     fetchColumns();
   };
 
@@ -81,7 +80,7 @@ export default function GoalsPage() {
   const createGoal = async (columnId: string) => {
     const title = newGoalTitle[columnId];
     if (!title?.trim()) return;
-    await fetch("/api/goals", {
+    await apiFetch("/api/goals", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -96,7 +95,7 @@ export default function GoalsPage() {
   };
 
   const toggleGoal = async (goal: Goal) => {
-    await fetch(`/api/goals/${goal.id}`, {
+    await apiFetch(`/api/goals/${goal.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ completed: !goal.completed }),
@@ -110,7 +109,7 @@ export default function GoalsPage() {
   };
   const saveGoalTitle = async (id: string) => {
     if (!editGoalTitle.trim()) return;
-    await fetch(`/api/goals/${id}`, {
+    await apiFetch(`/api/goals/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: editGoalTitle }),
@@ -120,7 +119,7 @@ export default function GoalsPage() {
   };
 
   const updateGoalColumn = async (goalId: string, newColumnId: string) => {
-    await fetch(`/api/goals/${goalId}`, {
+    await apiFetch(`/api/goals/${goalId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ columnId: newColumnId }),
@@ -129,7 +128,7 @@ export default function GoalsPage() {
   };
 
   const deleteGoal = async (id: string) => {
-    await fetch(`/api/goals/${id}`, { method: "DELETE" });
+    await apiFetch(`/api/goals/${id}`, { method: "DELETE" });
     fetchColumns();
   };
 
@@ -262,7 +261,7 @@ export default function GoalsPage() {
                             onClick={async () => {
                               const url = prompt("Введите ссылку на GitHub issue:");
                               if (url) {
-                                await fetch(`/api/goals/${goal.id}`, {
+                                await apiFetch(`/api/goals/${goal.id}`, {
                                   method: "PATCH",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify({ githubIssueUrl: url }),

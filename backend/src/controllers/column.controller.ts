@@ -18,22 +18,22 @@ class ColumnController {
   }
 
   async updateColumn(req: AuthRequest, res: Response) {
-    const { id } = req.params; const gID = id as string;
-    const column = await columnService.getColumnById(gID);
+    const { id } = req.params;
+    const column = await columnService.getColumnById(id);
     if (!column || column.userId !== req.user!.id) {
       return res.status(403).json({ message: "Forbidden" });
     }
-    const updated = await columnService.updateColumn(gID, req.body);
+    const updated = await columnService.updateColumn(id, req.body);
     return res.json(updated);
   }
 
   async deleteColumn(req: AuthRequest, res: Response) {
-    const { id } = req.params; const gID = id as string;
-    const column = await columnService.getColumnById(gID);
+    const { id } = req.params;
+    const column = await columnService.getColumnById(id);
     if (!column || column.userId !== req.user!.id) {
       return res.status(403).json({ message: "Forbidden" });
     }
-    await columnService.deleteColumn(gID);
+    await columnService.deleteColumn(id);
     return res.status(204).send();
   }
 }

@@ -7,6 +7,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get("/", statsController.getStats);
+router.get("/dashboard", statsController.getDashboard);
 router.post("/refresh", statsController.refreshStats);
 
 export default router;

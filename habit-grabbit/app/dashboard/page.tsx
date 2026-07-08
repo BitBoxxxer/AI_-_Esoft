@@ -1,6 +1,8 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import { prisma } from "@/lib/prisma";
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
+import { useRequireAuth } from "@/lib/useRequireAuth";
 import StreakBadge from "@/components/StreakBadge";
 import GoalRing from "@/components/GoalRing";
 import RefreshStatsButton from "@/components/RefreshStatsButton";
@@ -9,56 +11,58 @@ import GoalSetter from "@/components/GoalSetter";
 import ActivityView from "@/components/ActivityView";
 import NotificationBell from "@/components/NotificationBell";
 
-export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return <div>Вы не авторизованы. Пожалуйста, войдите.</div>;
+interface DashboardUser {
+  name: string | null;
+  image: string | null;
+  githubLogin: string | null;
+  dailyGoal: number;
+  notifyAboutGoal: boolean;
+}
+
+interface StatRow {
+  date: string;
+  contributions: number;
+  commits: number;
+  prs: number;
+  issues: number;
+}
+
+export default function DashboardPage() {
+  const status = useRequireAuth();
+  const { user: authUser } = useAuth();
+  const [dashUser, setDashUser] = useState<DashboardUser | null>(null);
+  const [stats, setStats] = useState<StatRow[]>([]);
+
+  const loadDashboard = useCallback(async () => {
+    const res = await apiFetch("/api/stats/dashboard");
+    if (res.ok) {
+      const data = await res.json();
+      setDashUser(data.user);
+      setStats(data.stats);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") loadDashboard();
+  }, [status, loadDashboard]);
+
+  if (status === "loading" || !dashUser) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        Загрузка...
+      </div>
+    );
   }
 
-  // Получаем dailyGoal пользователя
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { dailyGoal: true , notifyAboutGoal: true},
-  });
-  const dailyGoal = user?.dailyGoal ?? 0;
+  const dailyGoal = dashUser.dailyGoal ?? 0;
+  const parsedStats = stats.map((s) => ({ ...s, date: new Date(s.date) }));
+  const streak = calculateStreak(parsedStats);
 
-  // Начальная загрузка: последние 365 дней (для быстрого рендера)
-  const stats = await prisma.dailyStats.findMany({
-    where: { userId: session.user.id },
-    orderBy: { date: "desc" },
-    take: 365,
-  });
-
-  const streak = calculateStreak(stats);
-
-  // Сегодняшние данные для дневной нормы
   const todayStr = new Date().toISOString().slice(0, 10);
-  const todayStats = stats.find(
+  const todayStats = parsedStats.find(
     (s) => s.date.toISOString().slice(0, 10) === todayStr
   );
   const todayContributions = todayStats?.contributions ?? 0;
-  const notifyAboutGoal = user?.notifyAboutGoal ?? true;
-
-  if (notifyAboutGoal && dailyGoal > 0 && todayContributions < dailyGoal) {
-    const existing = await prisma.notification.findFirst({
-      where: {
-        userId: session.user.id,
-        type: "goal_not_met",
-        createdAt: {
-          gte: new Date(new Date().setHours(0, 0, 0, 0)),
-        },
-      },
-    });
-    if (!existing) {
-      await prisma.notification.create({
-        data: {
-          userId: session.user.id,
-          type: "goal_not_met",
-          message: `Ты ещё не выполнил дневную норму (${todayContributions}/${dailyGoal}). Есть время до конца дня!`,
-        },
-      });
-    }
-  }
 
   return (
     <main className="p-6 max-w-6xl mx-auto">
@@ -66,15 +70,15 @@ export default async function DashboardPage() {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {session.user?.image && (
+          {(dashUser.image || authUser?.image) && (
             <img
-              src={session.user.image}
+              src={dashUser.image || authUser?.image || ""}
               alt="avatar"
               className="w-20 h-20 rounded-full border-2 border-gray-600"
             />
           )}
           <h1 className="text-3xl font-bold text-white">
-            Привет, {session.user.login || session.user.name}!
+            Привет, {dashUser.githubLogin || dashUser.name}!
           </h1>
         </div>
         <div className="flex gap-2">
@@ -91,7 +95,7 @@ export default async function DashboardPage() {
           >
             💬 AI
           </a>
-          <RefreshStatsButton />
+          <RefreshStatsButton onRefreshed={loadDashboard} />
           <SignOutButton />
         </div>
       </div>
@@ -103,12 +107,14 @@ export default async function DashboardPage() {
         {dailyGoal > 0 ? (
           <GoalRing done={todayContributions} goal={dailyGoal} />
         ) : (
-          <GoalSetter currentGoal={0} />
+          <GoalSetter currentGoal={0} onUpdated={loadDashboard} />
         )}
 
         <div className="bg-black text-white rounded-xl shadow p-4">
           <p className="text-sm text-gray-300">Совет дня</p>
-          <p className="text-white mt-1 text-sm">{getDailyAdvice(streak, todayContributions, dailyGoal)}</p>
+          <p className="text-white mt-1 text-sm">
+            {getDailyAdvice(streak, todayContributions, dailyGoal)}
+          </p>
           <p className="text-gray-400 text-xs mt-2">
             Советы от AI появятся позже -_-
           </p>
@@ -118,19 +124,19 @@ export default async function DashboardPage() {
       {/* Редактирование цели (если уже задана) */}
       {dailyGoal > 0 && (
         <div className="mb-4">
-          <GoalSetter currentGoal={dailyGoal} />
+          <GoalSetter currentGoal={dailyGoal} onUpdated={loadDashboard} />
         </div>
       )}
 
       {/* Блок активности с переключателем периодов */}
       <section className="bg-black rounded-xl shadow p-4">
-        <ActivityView initialStats={stats} />
+        <ActivityView initialStats={parsedStats} />
       </section>
     </main>
   );
 }
 
-// Функция подсчёта streak (оставляем как была)
+// Функция подсчёта streak (перенесена без изменений)
 function calculateStreak(
   stats: { date: Date; contributions: number }[]
 ): number {
@@ -139,8 +145,7 @@ function calculateStreak(
   let streak = 0;
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
-  // eslint-disable-next-line prefer-const
-  let checkDate = new Date(today);
+  const checkDate = new Date(today);
   const todayStat = sorted.find(
     (s) => s.date.toISOString().slice(0, 10) === today.toISOString().slice(0, 10)
   );
@@ -164,8 +169,11 @@ function calculateStreak(
   return streak;
 }
 
-function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: number): string {
-  // Нет цели или цель 0 - советы без дневной нормы
+function getDailyAdvice(
+  streak: number,
+  todayContributions: number,
+  dailyGoal: number
+): string {
   if (!dailyGoal) {
     if (streak === 0 && todayContributions === 0) {
       return "Сегодня новый день! Сделай первый шаг, один коммит запустит твой страйк.";
@@ -185,7 +193,6 @@ function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: n
     return `🔥 ${streak} дней! МАШИНА.`;
   }
 
-  // Когда дневная цель задана
   const progressPercent = Math.round((todayContributions / dailyGoal) * 100);
   const remaining = dailyGoal - todayContributions;
 
@@ -207,7 +214,6 @@ function getDailyAdvice(streak: number, todayContributions: number, dailyGoal: n
       : `Сегодня ${todayContributions}/${dailyGoal}. Продолжай в том же духе, чтобы закрыть норму.`;
   }
 
-  // 0 contributions
   return streak > 0
     ? `Стрик ${streak} дней под угрозой! У тебя ещё есть время сделать ${dailyGoal} действий.`
     : "День только начался! Поставь себе цель выполнить дневную норму и начни с одного коммита.";
