@@ -17,27 +17,27 @@ class GoalController {
 
   async updateGoal(req: AuthRequest, res: Response) {
     const userId = req.user!.id;
-    const { id } = req.params;
+    const { id } = req.params; const gID = id as string;
 
-    const goal = await goalService.getGoalById(id);
+    const goal = await goalService.getGoalById(gID);
     if (!goal || goal.userId !== userId) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    const updated = await goalService.updateGoal(id, req.body);
+    const updated = await goalService.updateGoal(gID, req.body);
     return res.json(updated);
   }
 
   async deleteGoal(req: AuthRequest, res: Response) {
     const userId = req.user!.id;
-    const { id } = req.params;
+    const { id } = req.params; const gID = id as string;
 
-    const goal = await goalService.getGoalById(id);
+    const goal = await goalService.getGoalById(gID);
     if (!goal || goal.userId !== userId) {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    await goalService.deleteGoal(id);
+    await goalService.deleteGoal(gID);
     return res.status(204).send();
   }
 }
