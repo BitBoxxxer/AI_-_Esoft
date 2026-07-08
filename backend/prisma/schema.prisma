@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String?      @unique
+  emailVerified DateTime?
+  image         String?
+  dailyGoal     Int          @default(0)
+  accounts      Account[]
+  sessions      Session[]
+  dailyStats    DailyStats[]
+  goals         Goal[]
+  columns       GoalColumn[]
+  notifyAboutGoal  Boolean   @default(true)
+  notifications Notification[]
+  chatMessages  ChatMessage[]
+  conversations  Conversation[]
+}
+
+model DailyStats {
+  id            String   @id @default(cuid())
+  userId        String
+  date          DateTime @map("date")
+  commits       Int      @default(0)
+  prs           Int      @default(0)
+  issues        Int      @default(0)
+  contributions Int      @default(0)
+  goalMet       Boolean  @default(false)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, date])
+}
+
+model Goal {
+  id             String      @id @default(cuid())
+  userId         String
+  columnId       String      @default("")  // оно заполняется в коде если что
+  title          String
+  description    String?
+  targetCommits  Int?
+  targetPRs      Int?
+  targetIssues   Int?
+  deadline       DateTime?
+  completed      Boolean     @default(false)
+  githubIssueUrl String?
+  createdAt      DateTime    @default(now())
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  column         GoalColumn  @relation(fields: [columnId], references: [id], onDelete: Cascade)
+}
+
+model GoalColumn {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  order     Int      @default(0) // порядок колонок
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goals     Goal[]
+}
+
+model Conversation {
+  id           String        @id @default(cuid())
+  userId       String
+  title        String        @default("Новый диалог")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages     ChatMessage[]
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  userId         String
+  conversationId String
+  role           String
+  content        String
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // e.g., "goal_not_met"
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
