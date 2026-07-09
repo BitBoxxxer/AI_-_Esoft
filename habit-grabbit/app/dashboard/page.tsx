@@ -59,11 +59,14 @@ export default function DashboardPage() {
   const parsedStats = stats.map((s) => ({ ...s, date: new Date(s.date) }));
   const streak = calculateStreak(parsedStats);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayStats = parsedStats.find(
-    (s) => s.date.toISOString().slice(0, 10) === todayStr
-  );
-  const todayContributions = todayStats?.contributions ?? 0;
+  // "Сегодня" — самая свежая дата, которую реально прислал GitHub (уже в
+  // таймзоне самого аккаунта), а не часы браузера/сервера в UTC. Иначе ночью
+  // в таймзонах восточнее UTC кажется, что сегодняшних данных ещё нет, хотя
+  // GitHub их уже отдал.
+  const latestStat = [...parsedStats].sort(
+    (a, b) => b.date.getTime() - a.date.getTime()
+  )[0];
+  const todayContributions = latestStat?.contributions ?? 0;
 
   return (
     <main className="p-6 max-w-6xl mx-auto">
@@ -146,19 +149,21 @@ export default function DashboardPage() {
   );
 }
 
-// Функция подсчёта streak (перенесена без изменений)
+// Функция подсчёта streak
 function calculateStreak(
   stats: { date: Date; contributions: number }[]
 ): number {
   if (stats.length === 0) return 0;
   const sorted = [...stats].sort((a, b) => b.date.getTime() - a.date.getTime());
   let streak = 0;
-  const today = new Date();
+  // "Сегодня" — самая свежая запись, а не системные часы: GitHub формирует
+  // календарь контрибуций в таймзоне аккаунта, а не в UTC, так что сверяться
+  // с new Date() на сервере/в браузере ненадёжно (см. calculateStreakFromDays
+  // на бэкенде — та же идея).
+  const todayStat = sorted[0];
+  const today = new Date(todayStat.date);
   today.setUTCHours(0, 0, 0, 0);
   const checkDate = new Date(today);
-  const todayStat = sorted.find(
-    (s) => s.date.toISOString().slice(0, 10) === today.toISOString().slice(0, 10)
-  );
   // Важно: проверяем не наличие записи за сегодня (она почти всегда есть,
   // просто с contributions: 0, пока не покоммитил), а именно наличие
   // активности. Иначе стрик за вчера/позавчера ошибочно обнулялся бы

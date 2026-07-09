@@ -1,5 +1,5 @@
 import { prisma } from "../config/prisma";
-import { fetchContributions, ContributionDay } from "../utils/github";
+import { fetchContributions, ContributionDay, latestDateStr } from "../utils/github";
 import { withRetry } from "../utils/prismaRetry";
 import authService from "./auth.service";
 
@@ -131,7 +131,7 @@ class StatsService {
 
     const stats = toFrontendShape(contributionDays);
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = latestDateStr(contributionDays);
     const todayStats = contributionDays.find((d) => d.date === todayStr);
     const todayContributions = todayStats?.contributionCount ?? 0;
 
@@ -150,7 +150,7 @@ class StatsService {
     const notifyAboutGoal = user?.notifyAboutGoal ?? true;
     if (!notifyAboutGoal || dailyGoal <= 0) return;
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = latestDateStr(days);
     const todayContributions =
       days.find((d) => d.date === todayStr)?.contributionCount ?? 0;
 

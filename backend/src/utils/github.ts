@@ -258,16 +258,30 @@ export async function fetchPublicProfile(
   return res.json();
 }
 
+// GitHub формирует contributionCalendar в таймзоне самого аккаунта, а не в UTC.
+// Если весь остальной код будет искать "сегодня" через new Date() в UTC, для
+// людей в таймзонах восточнее UTC (GMT+X) будет казаться, что "сегодняшних"
+// данных ещё нет, хотя GitHub их уже отдал — сутки в UTC наступают позже.
+// Поэтому "сегодня" везде надо брать из самих данных: недели/дни в массиве
+// идут в хронологическом порядке, значит последний элемент — самый свежий
+// день, который знает GitHub, вот его и считаем "сегодня".
+export function latestDateStr(days: ContributionDay[]): string {
+  if (days.length === 0) return new Date().toISOString().slice(0, 10);
+  return days[days.length - 1].date;
+}
+
 // Простой подсчёт стрика по массиву дней активности — сколько подряд
 // дней (включая сегодня либо вчера, если сегодня ещё пусто) есть контрибуции
 export function calculateStreakFromDays(days: ContributionDay[]): number {
   if (days.length === 0) return 0;
 
   const byDate = new Map(days.map((d) => [d.date, d.contributionCount]));
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  // "Сегодня" — последний день, который реально прислал GitHub (уже в его
+  // собственной таймзоне), а не системные часы сервера. См. комментарий у
+  // latestDateStr выше.
+  const todayStr = latestDateStr(days);
+  const today = new Date(`${todayStr}T00:00:00.000Z`);
 
-  const todayStr = today.toISOString().slice(0, 10);
   const hasToday = (byDate.get(todayStr) ?? 0) > 0;
 
   const cursor = new Date(today);
