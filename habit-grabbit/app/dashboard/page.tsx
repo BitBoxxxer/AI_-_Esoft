@@ -83,6 +83,12 @@ export default function DashboardPage() {
           </h1>
         </div>
         <div className="flex gap-2">
+          <a
+            href="/friends"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
+          >
+            Друзья
+          </a>
           <NotificationBell />
           <a
             href="/goals"
@@ -103,7 +109,7 @@ export default function DashboardPage() {
 
       {/* Карточки */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StreakBadge streak={streak} />
+        <StreakBadge streak={streak} atRisk={todayContributions === 0} />
 
         {dailyGoal > 0 ? (
           <GoalRing done={todayContributions} goal={dailyGoal} />
@@ -153,7 +159,12 @@ function calculateStreak(
   const todayStat = sorted.find(
     (s) => s.date.toISOString().slice(0, 10) === today.toISOString().slice(0, 10)
   );
-  if (!todayStat) {
+  // Важно: проверяем не наличие записи за сегодня (она почти всегда есть,
+  // просто с contributions: 0, пока не покоммитил), а именно наличие
+  // активности. Иначе стрик за вчера/позавчера ошибочно обнулялся бы
+  // в момент, когда сегодняшний рабочий день ещё не начался.
+  const todayHasActivity = (todayStat?.contributions ?? 0) > 0;
+  if (!todayHasActivity) {
     checkDate.setUTCDate(checkDate.getUTCDate() - 1);
   }
   for (const stat of sorted) {
