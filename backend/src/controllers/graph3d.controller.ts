@@ -12,8 +12,12 @@ class Graph3DController {
       // Без этого браузер блокирует <img src="http://localhost:4000/..."> со страницы
       // на другом порту (localhost:3000) как "NotSameOrigin", даже если запрос дошёл
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-      // Кэш и на стороне браузера тоже — картинка и так обновляется редко
-      res.setHeader("Cache-Control", "private, max-age=300");
+      // Картинка персональная (зависит от того, какой юзер/GitHub-аккаунт сейчас
+      // залогинен), поэтому браузеру её кэшировать нельзя — иначе после смены
+      // GitHub-аккаунта на дашборде мелькает график предыдущего аккаунта, даже
+      // не долетая до сервера. Актуальность и скорость и так обеспечивает
+      // серверный TTL-кэш в graph3d.service.ts.
+      res.setHeader("Cache-Control", "private, no-store, must-revalidate");
       return res.send(svg);
     } catch (error) {
       if (error instanceof HttpError) {
