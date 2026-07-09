@@ -8,7 +8,7 @@ import GoalRing from "@/components/GoalRing";
 import RefreshStatsButton from "@/components/RefreshStatsButton";
 import SignOutButton from "@/components/SignOutButton";
 import GoalSetter from "@/components/GoalSetter";
-import ActivityView from "@/components/ActivityView";
+import Graph3D from "@/components/Graph3D";
 import NotificationBell from "@/components/NotificationBell";
 
 interface DashboardUser {
@@ -128,9 +128,9 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Блок активности с переключателем периодов */}
+      {/* 3D-график активности */}
       <section className="bg-black rounded-xl shadow p-4">
-        <ActivityView initialStats={parsedStats} />
+        <Graph3D />
       </section>
     </main>
   );

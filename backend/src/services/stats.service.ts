@@ -1,5 +1,5 @@
 import { prisma } from "../config/prisma";
-import { fetchContributions } from "../utils/github";
+import { fetchContributions, ContributionDay } from "../utils/github";
 import { withRetry } from "../utils/prismaRetry";
 import authService from "./auth.service";
 
@@ -11,87 +11,102 @@ export class HttpError extends Error {
   }
 }
 
-// Разбивает массив на чанки заданного размера
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    out.push(arr.slice(i, i + size));
+// Форма данных, которую ждёт фронт (Heatmap.tsx читает поле contributions)
+interface FrontendDailyStat {
+  date: string;
+  contributions: number;
+  commits: number;
+  prs: number;
+  issues: number;
+}
+
+function toFrontendShape(days: ContributionDay[]): FrontendDailyStat[] {
+  return days.map((d) => ({
+    date: d.date,
+    contributions: d.contributionCount,
+    commits: 0,
+    prs: 0,
+    issues: 0,
+  }));
+}
+
+// Простой in-memory кэш, чтобы не долбить GitHub GraphQL на каждый чих
+// (дашборд + уведомления могут запрашиваться почти одновременно).
+// Живёт только пока жив процесс — это ок, это не источник правды, а просто TTL-кэш.
+const cache = new Map<string, { data: ContributionDay[]; expiresAt: number }>();
+const CACHE_TTL_MS = 2 * 60 * 1000; // 2 минуты
+
+async function getCachedContributions(
+  userId: string,
+  login: string,
+  accessToken: string,
+  from?: string,
+  to?: string
+): Promise<ContributionDay[]> {
+  const cacheKey = `${userId}:${from ?? "default"}:${to ?? "default"}`;
+  const cached = cache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
   }
-  return out;
+
+  const days = await fetchContributions(login, accessToken, from, to);
+  cache.set(cacheKey, { data: days, expiresAt: Date.now() + CACHE_TTL_MS });
+  return days;
+}
+
+function invalidateCache(userId: string) {
+  for (const key of cache.keys()) {
+    if (key.startsWith(`${userId}:`)) cache.delete(key);
+  }
 }
 
 class StatsService {
+  // Больше не читаем из БД — берём напрямую из GitHub (с кэшем на 2 минуты)
   async getStats(userId: string, days: number) {
-    return withRetry(() =>
-      prisma.dailyStats.findMany({
-        where: { userId },
-        orderBy: { date: "desc" },
-        take: days,
-      })
+    const account = await authService.getGithubAccount(userId);
+    if (!account) {
+      throw new HttpError(401, "GitHub аккаунт не подключен или токен устарел — войдите снова");
+    }
+
+    const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const to = new Date().toISOString();
+
+    const contributionDays = await getCachedContributions(
+      userId,
+      account.login,
+      account.accessToken,
+      from,
+      to
     );
+
+    return toFrontendShape(contributionDays);
   }
 
+  // Раньше тут был цикл createMany/updateMany на ~365 записей — именно он
+  // постоянно ловил обрывы соединения с Supabase. Теперь просто сбрасываем
+  // кэш и говорим фронту "сходи забери свежие данные из GitHub".
   async refreshStats(userId: string) {
     const account = await authService.getGithubAccount(userId);
     if (!account) {
       throw new HttpError(401, "GitHub аккаунт не подключен или токен устарел — войдите снова");
     }
 
+    invalidateCache(userId);
+
+    // Один живой запрос к GitHub — без единой записи в Postgres
     const days = await fetchContributions(account.login, account.accessToken);
-    if (days.length === 0) return 0;
 
-    // Батчами по 50 записей — большие createMany (300+ строк) через
-    // Supabase pooler иногда рвут соединение (ConnectionReset).
-    // Чанки меньше = запросы быстрее = меньше шанс попасть под обрыв.
-    const CHUNK_SIZE = 50;
-    const dayChunks = chunk(days, CHUNK_SIZE);
-
-    for (const dayChunk of dayChunks) {
-      await withRetry(() =>
-        prisma.dailyStats.createMany({
-          data: dayChunk.map((day) => ({
-            userId,
-            date: new Date(day.date + "T00:00:00Z"),
-            contributions: day.contributionCount,
-            commits: 0,
-            prs: 0,
-            issues: 0,
-          })),
-          skipDuplicates: true,
-        })
-      );
-    }
-
-    // Обновляем существующие записи, тоже чанками группируя по значению
-    const grouped = new Map<number, Date[]>();
-    for (const day of days) {
-      const date = new Date(day.date + "T00:00:00Z");
-      const cnt = day.contributionCount;
-      if (!grouped.has(cnt)) grouped.set(cnt, []);
-      grouped.get(cnt)!.push(date);
-    }
-
-    for (const [contributions, dates] of grouped) {
-      // На случай если для одного contributions накопилось много дат —
-      // тоже режем чанками
-      for (const dateChunk of chunk(dates, CHUNK_SIZE)) {
-        await withRetry(() =>
-          prisma.dailyStats.updateMany({
-            where: {
-              userId,
-              date: { in: dateChunk },
-            },
-            data: { contributions },
-          })
-        );
-      }
-    }
+    // Проверка дневной цели теперь тоже считается по live-данным,
+    // а не по значению, которое раньше лежало в dailyStats
+    await this.checkDailyGoal(userId, days);
 
     return days.length;
   }
 
   async getDashboard(userId: string) {
-    const [user, stats] = await Promise.all([
+    const account = await authService.getGithubAccount(userId);
+
+    const [user, contributionDays] = await Promise.all([
       withRetry(() =>
         prisma.user.findUnique({
           where: { id: userId },
@@ -105,51 +120,61 @@ class StatsService {
           },
         })
       ),
-      withRetry(() =>
-        prisma.dailyStats.findMany({
-          where: { userId },
-          orderBy: { date: "desc" },
-          take: 365,
-        })
-      ),
+      account
+        ? getCachedContributions(userId, account.login, account.accessToken)
+        : Promise.resolve([] as ContributionDay[]),
     ]);
+
+    const stats = toFrontendShape(contributionDays);
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStats = contributionDays.find((d) => d.date === todayStr);
+    const todayContributions = todayStats?.contributionCount ?? 0;
+
+    return { user, stats, todayContributions };
+  }
+
+  private async checkDailyGoal(userId: string, days: ContributionDay[]) {
+    const user = await withRetry(() =>
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { dailyGoal: true, notifyAboutGoal: true },
+      })
+    );
 
     const dailyGoal = user?.dailyGoal ?? 0;
     const notifyAboutGoal = user?.notifyAboutGoal ?? true;
+    if (!notifyAboutGoal || dailyGoal <= 0) return;
 
     const todayStr = new Date().toISOString().slice(0, 10);
-    const todayStats = stats.find(
-      (s) => s.date.toISOString().slice(0, 10) === todayStr
+    const todayContributions =
+      days.find((d) => d.date === todayStr)?.contributionCount ?? 0;
+
+    if (todayContributions >= dailyGoal) return;
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const existing = await withRetry(() =>
+      prisma.notification.findFirst({
+        where: {
+          userId,
+          type: "goal_not_met",
+          createdAt: { gte: startOfDay },
+        },
+      })
     );
-    const todayContributions = todayStats?.contributions ?? 0;
+    if (existing) return;
 
-    if (notifyAboutGoal && dailyGoal > 0 && todayContributions < dailyGoal) {
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const existing = await withRetry(() =>
-        prisma.notification.findFirst({
-          where: {
-            userId,
-            type: "goal_not_met",
-            createdAt: { gte: startOfDay },
-          },
-        })
-      );
-      if (!existing) {
-        await withRetry(() =>
-          prisma.notification.create({
-            data: {
-              userId,
-              type: "goal_not_met",
-              message: `Ты ещё не выполнил дневную норму (${todayContributions}/${dailyGoal}). Есть время до конца дня!`,
-            },
-          })
-        );
-      }
-    }
-
-    return { user, stats, todayContributions };
+    await withRetry(() =>
+      prisma.notification.create({
+        data: {
+          userId,
+          type: "goal_not_met",
+          message: `Ты ещё не выполнил дневную норму (${todayContributions}/${dailyGoal}). Есть время до конца дня!`,
+        },
+      })
+    );
   }
 }
 
