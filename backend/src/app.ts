@@ -16,6 +16,7 @@ import statsRoutes from "./routes/stats.routes";
 import userRoutes from "./routes/user.routes";
 import graph3dRoutes from "./routes/graph3d.routes";
 import watchedRoutes from "./routes/watched.routes";
+import badgeRoutes from "./routes/badge.routes";
 
 const app = express();
 
@@ -46,5 +47,6 @@ app.use("/api/user", userRoutes);
 // типо доп роуты ТУТ
 app.use("/api/graph3d", graph3dRoutes);
 app.use("/api/watched", watchedRoutes);
+app.use("/api/badge", badgeRoutes);
 
 export default app;
