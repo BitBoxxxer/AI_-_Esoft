@@ -82,6 +82,12 @@ export default function DashboardPage() {
           </h1>
         </div>
         <div className="flex gap-2">
+          <a
+            href="/friends"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
+          >
+            Друзья
+          </a>
           <NotificationBell />
           <a
             href="/goals"

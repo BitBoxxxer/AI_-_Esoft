@@ -50,6 +50,7 @@ model User {
   notifications Notification[]
   chatMessages  ChatMessage[]
   conversations  Conversation[]
+  watchedUsers  WatchedUser[]
 }
 
 model DailyStats {
@@ -122,4 +123,16 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Отслеживаемые GitHub-пользователи ("друзья") — не обязательно
+// зарегистрированы в самом приложении, просто публичный логин
+model WatchedUser {
+  id          String   @id @default(cuid())
+  watcherId   String
+  githubLogin String
+  createdAt   DateTime @default(now())
+  watcher     User     @relation(fields: [watcherId], references: [id], onDelete: Cascade)
+
+  @@unique([watcherId, githubLogin])
 }
