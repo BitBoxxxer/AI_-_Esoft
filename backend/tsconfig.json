@@ -4,8 +4,6 @@
     "module": "CommonJS",
     "moduleResolution": "node",
 
-    "ignoreDeprecations": "6.0",// просто IDE не видит другую версию и ошибка мешает работать >:(
-
     "rootDir": "./src",
     "outDir": "./dist",
 

@@ -7,7 +7,10 @@ node_modules/
 .next/
 out/
 
-# бд SQLite (локальная)
+# продакшн билд бэкэнда
+dist/
+
+# бд (локальная)
 dev.db
 prisma/dev.db
 *.db
