@@ -51,6 +51,15 @@ class AuthService {
           select: { id: true, email: true, name: true },
         })
       );
+
+      // Обновляем токен — нужен для GitHub GraphQL API (/stats/refresh)
+      // Запускаем fire-and-forget: если PgBouncer сбросит соединение — не роняем весь callback
+      withRetry(() =>
+        prisma.account.update({
+          where: { id: existingAccount.id },
+          data: { access_token: accessToken },
+        })
+      ).catch((e) => console.warn("[auth] access_token update failed (non-critical):", e.message));
     } else {
       const upserted = await withRetry(() =>
         prisma.user.upsert({
