@@ -9,6 +9,7 @@ import RefreshStatsButton from "@/components/RefreshStatsButton";
 import SignOutButton from "@/components/SignOutButton";
 import GoalSetter from "@/components/GoalSetter";
 import Graph3D from "@/components/Graph3D";
+import FriendsWidget from "@/components/FriendsWidget";
 import NotificationBell from "@/components/NotificationBell";
 
 interface DashboardUser {
@@ -134,10 +135,13 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* 3D-график активности */}
-      <section className="bg-black rounded-xl shadow p-4">
-        <Graph3D />
-      </section>
+      {/* 3D-график активности + отслеживаемые друзья */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <section className="bg-black rounded-xl shadow p-4 lg:col-span-2 max-w-3xl mx-auto lg:mx-0 w-full">
+          <Graph3D />
+        </section>
+        <FriendsWidget />
+      </div>
     </main>
   );
 }
