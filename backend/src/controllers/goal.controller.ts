@@ -17,7 +17,7 @@ class GoalController {
 
   async updateGoal(req: AuthRequest, res: Response) {
     const userId = req.user!.id;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const goal = await goalService.getGoalById(id);
     if (!goal || goal.userId !== userId) {
@@ -30,7 +30,7 @@ class GoalController {
 
   async deleteGoal(req: AuthRequest, res: Response) {
     const userId = req.user!.id;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const goal = await goalService.getGoalById(id);
     if (!goal || goal.userId !== userId) {

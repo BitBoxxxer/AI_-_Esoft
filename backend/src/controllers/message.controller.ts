@@ -4,7 +4,7 @@ import { AuthRequest } from "../middlewares/auth.middleware";
 
 class MessageController {
   async editMessage(req: AuthRequest, res: Response) {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { content } = req.body;
 
     if (!content || typeof content !== "string") {

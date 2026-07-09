@@ -18,7 +18,7 @@ class ColumnController {
   }
 
   async updateColumn(req: AuthRequest, res: Response) {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const column = await columnService.getColumnById(id);
     if (!column || column.userId !== req.user!.id) {
       return res.status(403).json({ message: "Forbidden" });
@@ -28,7 +28,7 @@ class ColumnController {
   }
 
   async deleteColumn(req: AuthRequest, res: Response) {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const column = await columnService.getColumnById(id);
     if (!column || column.userId !== req.user!.id) {
       return res.status(403).json({ message: "Forbidden" });

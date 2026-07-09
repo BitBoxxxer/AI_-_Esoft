@@ -14,7 +14,7 @@ class ConversationController {
   }
 
   async getMessages(req: AuthRequest, res: Response) {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const conversation = await conversationService.getConversationById(id);
     if (!conversation || conversation.userId !== req.user!.id) {
       return res.status(403).json({ message: "Forbidden" });
