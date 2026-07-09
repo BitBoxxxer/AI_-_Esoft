@@ -168,4 +168,8 @@ function invalidateCache(userId: string) {
   activityCache.delete(userId);
 }
 
+export function invalidateWatchedActivityCache(userId: string) {
+  invalidateCache(userId);
+}
+
 export default new WatchedService();

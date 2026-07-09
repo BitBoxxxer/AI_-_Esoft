@@ -33,6 +33,10 @@ const OUTPUT_FILENAME = "profile-night-rainbow.svg";
 const cache = new Map<string, { svg: string; expiresAt: number }>();
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 минут — эта картинка и так меняется медленно
 
+export function invalidateGraph3dCache(userId: string) {
+  cache.delete(userId);
+}
+
 class Graph3DService {
   async getSvg(userId: string, forceRefresh = false): Promise<string> {
     const account = await authService.getGithubAccount(userId);

@@ -6,6 +6,9 @@ import {
 } from "../utils/github";
 import { signJwt } from "../utils/jwt";
 import { withRetry } from "../utils/prismaRetry";
+import { invalidateStatsCache } from "./stats.service";
+import { invalidateGraph3dCache } from "./graph3d.service";
+import { invalidateWatchedActivityCache } from "./watched.service";
 
 class AuthService {
   getGithubAuthorizeUrl(state: string) {
@@ -95,6 +98,14 @@ class AuthService {
     }
 
     const token = signJwt({ id: user.id, email: user.email, name: user.name });
+
+    // Пользователь мог переподключить другой GitHub-аккаунт (другой login,
+    // другой access_token) — старые закэшированные статы/3D-график/активность
+    // друзей по этому userId больше не актуальны, сбрасываем их.
+    invalidateStatsCache(user.id);
+    invalidateGraph3dCache(user.id);
+    invalidateWatchedActivityCache(user.id);
+
     return { token, user, login: profile.login };
   }
 

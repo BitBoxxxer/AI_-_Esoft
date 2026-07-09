@@ -60,6 +60,10 @@ function invalidateCache(userId: string) {
   }
 }
 
+export function invalidateStatsCache(userId: string) {
+  invalidateCache(userId);
+}
+
 class StatsService {
   // Больше не читаем из БД — берём напрямую из GitHub (с кэшем на 2 минуты)
   async getStats(userId: string, days: number) {
