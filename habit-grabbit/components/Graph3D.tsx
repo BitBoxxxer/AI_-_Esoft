@@ -74,7 +74,7 @@ export default function Graph3D() {
           // всегда с ?refresh=true, чтобы бэкенд точно перегенерировал картинку.
           src={`${API_URL}/api/graph3d${version > 0 ? "?refresh=true" : ""}`}
           alt="3D график активности"
-          className="w-full h-auto max-h-[600px] object-contain mx-auto"
+          className="w-full h-auto max-h-[800px] object-contain mx-auto"
           onLoad={handleLoad}
           onError={handleError}
         />
