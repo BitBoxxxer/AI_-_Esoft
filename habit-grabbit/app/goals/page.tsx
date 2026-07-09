@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useRequireAuth } from "@/lib/useRequireAuth";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface Goal {
   id: string;
@@ -137,7 +138,10 @@ export default function GoalsPage() {
 
   return (
     <main className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">🎯 Мои цели</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">🎯 Мои цели</h1>
+        <BackToDashboardButton />
+      </div>
 
       {/* Управление колонками */}
       <div className="flex gap-2 mb-6">

@@ -56,11 +56,15 @@ class WatchedService {
     }
 
     try {
-      return await withRetry(() =>
+      const created = await withRetry(() =>
         prisma.watchedUser.create({
           data: { watcherId: userId, githubLogin: profile.login },
         })
       );
+      // Без этого /api/watched/activity ещё до 5 минут отдаёт закэшированный
+      // список без только что добавленного пользователя.
+      invalidateCache(userId);
+      return created;
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
       if (code === "P2002") {

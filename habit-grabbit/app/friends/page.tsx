@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useRequireAuth } from "@/lib/useRequireAuth";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface WatchedItem {
   id: string;
@@ -87,7 +88,10 @@ export default function FriendsPage() {
 
   return (
     <main className="p-6 max-w-4xl mx-auto text-white">
-      <h1 className="text-2xl font-semibold mb-6">Активность друзей</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Активность друзей</h1>
+        <BackToDashboardButton />
+      </div>
 
       {/* Добавить вручную */}
       <section className="bg-gray-900 rounded-xl p-4 mb-6">

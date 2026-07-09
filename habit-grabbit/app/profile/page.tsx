@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useRequireAuth } from "@/lib/useRequireAuth";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 interface UserProfile {
   id: string;
@@ -44,7 +45,10 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">👤 Профиль</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">👤 Профиль</h1>
+        <BackToDashboardButton />
+      </div>
 
       <div className="bg-gray-900 rounded-xl p-6 max-w-md">
         <div className="flex items-center gap-4 mb-6">

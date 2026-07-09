@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useRequireAuth } from "@/lib/useRequireAuth";
-import SignOutButton from "@/components/SignOutButton";
+import BackToDashboardButton from "@/components/BackToDashboardButton";
 
 const quickActions = [
   "Проанализируй неделю",
@@ -179,7 +179,7 @@ export default function ChatPage() {
             </button>
           ))}
         </div>
-        <SignOutButton />
+        <BackToDashboardButton />
       </aside>
 
       {/* Основная область чата */}
