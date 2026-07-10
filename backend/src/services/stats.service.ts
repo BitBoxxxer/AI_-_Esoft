@@ -65,7 +65,7 @@ export function invalidateStatsCache(userId: string) {
 }
 
 class StatsService {
-  // Больше не читаем из БД - берём напрямую из GitHub (с кэшем на 2 минуты)
+  // напрямую из GitHub (с кэшем на 2 минуты)
   async getStats(userId: string, days: number) {
     const account = await authService.getGithubAccount(userId);
     if (!account) {
@@ -86,22 +86,15 @@ class StatsService {
     return toFrontendShape(contributionDays);
   }
 
-  // Раньше тут был цикл createMany/updateMany на ~365 записей - именно он
-  // постоянно ловил обрывы соединения с Supabase. Теперь просто сбрасываем
-  // кэш и говорим фронту "сходи забери свежие данные из GitHub".
+  // Раньше тут был цикл createMany/updateMany на 365 записей - именно он
+  // постоянно ловил обрывы соединения с Supabase. Теперь просто сбрасывает кэш
   async refreshStats(userId: string) {
     const account = await authService.getGithubAccount(userId);
     if (!account) {
       throw new HttpError(401, "GitHub аккаунт не подключен или токен устарел - войдите снова");
     }
-
     invalidateCache(userId);
-
-    // Один живой запрос к GitHub - без единой записи в Postgres
     const days = await fetchContributions(account.login, account.accessToken);
-
-    // Проверка дневной цели теперь тоже считается по live-данным,
-    // а не по значению, которое раньше лежало в dailyStats
     await this.checkDailyGoal(userId, days);
 
     return days.length;

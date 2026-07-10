@@ -11,8 +11,6 @@ const execFileAsync = promisify(execFile);
 // Путь до собранного CLI пакета yoshi389111/github-profile-3d-contrib.
 // Устанавливается командой:
 //   npm install github:yoshi389111/github-profile-3d-contrib
-// Пакет уже содержит собранный dist/index.js (это обязательное требование
-// для GitHub Actions на JS - билд-шаг не нужен).
 const CLI_PATH = path.join(
   __dirname,
   "..",
@@ -24,8 +22,6 @@ const CLI_PATH = path.join(
 );
 
 // По умолчанию тулза генерирует несколько вариантов SVG в папку
-// <cwd>/profile-3d-contrib/*.svg. Берём "ночной радужный" - он больше всего
-// похож на то, что было в твоём README.
 const OUTPUT_FILENAME = "profile-night-rainbow.svg";
 
 // Кэш готовых SVG на пользователя, чтобы не гонять генерацию (которая сама
@@ -58,8 +54,7 @@ class Graph3DService {
   }
 
   private async generate(login: string, accessToken: string): Promise<string> {
-    // Отдельная временная папка на каждый вызов - чтобы параллельные
-    // генерации для разных пользователей не затирали файлы друг друга
+    // Отдельная временная папка на каждый вызов - чтобы параллельные генерации для разных пользователей не затирали файлы друг друга
     const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "3d-contrib-"));
 
     try {
@@ -69,7 +64,7 @@ class Graph3DService {
           ...process.env,
           GITHUB_TOKEN: accessToken,
         },
-        timeout: 30_000, // генерация делает несколько запросов к GitHub, даём 30 сек
+        timeout: 30_000,
       });
 
       const svgPath = path.join(workDir, "profile-3d-contrib", OUTPUT_FILENAME);
@@ -79,8 +74,6 @@ class Graph3DService {
       console.error("[graph3d] Ошибка генерации SVG:", err);
       throw new HttpError(500, "Не удалось сгенерировать 3D-график активности");
     } finally {
-      // Подчищаем за собой - эти временные SVG-файлы больше не нужны,
-      // мы их уже прочитали и закэшировали в памяти
       await fs.rm(workDir, { recursive: true, force: true }).catch(() => {});
     }
   }

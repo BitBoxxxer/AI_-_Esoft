@@ -28,8 +28,7 @@ class TelegramService {
   }
 
   // Регистрирует список команд в самом Telegram-клиенте (подсказка при вводе "/").
-  // Достаточно вызвать один раз после смены токена/списка команд - Telegram сам
-  // хранит это на своей стороне. Можно дёргать при старте сервера.
+  // Достаточно вызвать один раз после смены токена/списка команд - Telegram сам хранит это
   async setMyCommands() {
     if (!API_BASE) return; // бот не настроен - тихо пропускаем, не роняем сервер
     try {
@@ -186,12 +185,12 @@ class TelegramService {
       goal > 0
         ? todayContributions >= goal
           ? `✅ Норма выполнена: ${todayContributions}/${goal}`
-          : `⏳ Норма не выполнена: ${todayContributions}/${goal}`
+          : `Норма не выполнена: ${todayContributions}/${goal}`
         : "Дневная норма не задана (можно включить в профиле).";
 
     await this.sendMessage(
       chatId,
-      `👤 @${account.login}\n` +
+      `@${account.login}\n` +
         `🔥 Стрик: ${streak} ${streak === 1 ? "день" : "дней"}\n` +
         `${goalLine}\n\n` +
         `Уведомления: ${user.notifyAboutGoal ? "включены" : "выключены"} (меняется в профиле приложения).`

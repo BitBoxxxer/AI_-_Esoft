@@ -1,5 +1,3 @@
-// Обёртки над GitHub REST/GraphQL API + OAuth
-
 export interface GithubTokenResponse {
   access_token: string;
   scope: string;
@@ -214,8 +212,7 @@ export interface GithubPublicProfile {
   avatar_url: string;
 }
 
-// /user/followers и /user/following - работают для "себя" (владельца токена),
-// без указания логина в пути
+// /user/followers и /user/following - работают для "себя" (владельца токена), без указания логина в пути
 export async function fetchFollowers(
   accessToken: string
 ): Promise<GithubPublicProfile[]> {

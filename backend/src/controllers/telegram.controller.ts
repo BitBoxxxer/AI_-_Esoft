@@ -35,13 +35,11 @@ class TelegramController {
       return res.status(200).send("OK");
     } catch (error) {
       console.error("[telegram webhook]", error);
-      // Telegram ретраит на ошибки - отвечаем 200, чтобы не спамил ретраями
       return res.status(200).send("OK");
     }
   }
 
-  // Триггер рассылки напоминаний - вызывается внешним cron-сервисом
-  // (см. инструкцию), защищён секретом в query
+  // Триггер рассылки напоминаний - вызывается внешним cron-сервисом защищён секретом в query
   async runReminders(req: Request, res: Response) {
     try {
       const secret = req.query.secret;

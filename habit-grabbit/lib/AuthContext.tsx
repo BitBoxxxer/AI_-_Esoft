@@ -39,7 +39,7 @@ async function fetchMe(retries = 5): Promise<AuthUser | null> {
     if (res.ok) return res.json();
     if (res.status === 401 || res.status === 404) return null;
 
-    // 503 = база временно недоступна, повторяем через 1 секунду (это продолжение ебли с postgreSQL)
+    // 503 = база временно недоступна, повторяем через 1 секунду
     if (res.status === 503 && i < retries - 1) {
       console.warn(`[AuthContext] /auth/me returned 503, retry ${i + 1}/${retries}`);
       await new Promise((r) => setTimeout(r, 1000));

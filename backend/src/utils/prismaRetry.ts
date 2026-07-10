@@ -22,11 +22,11 @@ export async function withRetry<T>(
       const msg = (err as { message?: string })?.message ?? "";
 
       const isRetryable =
-        code === "P1017" ||   // Server has closed the connection
-        code === "P1001" ||   // Can't reach database server
-        code === "P2024" ||   // Timed out fetching connection from pool
-        msg.includes("prepared statement") ||   // pgbouncer без pgbouncer=true
-        msg.includes("26000") ||                // PostgreSQL: invalid_sql_statement_name
+        code === "P1017" ||
+        code === "P1001" ||
+        code === "P2024" ||
+        msg.includes("prepared statement") ||
+        msg.includes("26000") ||
         msg.includes("Server has closed the connection") ||
         msg.includes("Connection reset") ||
         msg.includes("10054") ||

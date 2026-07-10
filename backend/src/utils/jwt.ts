@@ -10,7 +10,6 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 const JWT_EXPIRES_IN = "30d";
 
 if (!JWT_SECRET) {
-  // Не бросаем сразу на импорте в тестах, но громко предупреждаем
   console.warn("[jwt] JWT_SECRET не задан в .env - токены будут небезопасны!");
 }
 

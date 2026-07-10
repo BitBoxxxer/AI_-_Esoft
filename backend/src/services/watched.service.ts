@@ -11,8 +11,7 @@ import {
   ContributionDay,
 } from "../utils/github";
 
-// Кэш активности отслеживаемых пользователей - то же самое решение,
-// что и для собственной статистики: не бьём GitHub на каждый рендер
+// Кэш активности отслеживаемых пользователей
 const activityCache = new Map<
   string,
   { data: WatchedActivity[]; expiresAt: number }
@@ -49,7 +48,6 @@ class WatchedService {
       throw new HttpError(401, "GitHub аккаунт не подключен");
     }
 
-    // Проверяем, что такой пользователь реально существует на GitHub
     const profile = await fetchPublicProfile(login, account.accessToken);
     if (!profile) {
       throw new HttpError(404, `Пользователь "${login}" не найден на GitHub`);
@@ -61,8 +59,6 @@ class WatchedService {
           data: { watcherId: userId, githubLogin: profile.login },
         })
       );
-      // Без этого /api/watched/activity ещё до 5 минут отдаёт закэшированный
-      // список без только что добавленного пользователя.
       invalidateCache(userId);
       return created;
     } catch (err: unknown) {
@@ -85,7 +81,7 @@ class WatchedService {
     invalidateCache(userId);
   }
 
-  // Предлагаем добавить из тех, кто подписан на тебя / на кого подписан ты
+  // Предлагает добавить из подписанных на юзера или на кого сам чел подписан
   async suggestions(userId: string) {
     const account = await authService.getGithubAccount(userId);
     if (!account) {
@@ -104,7 +100,7 @@ class WatchedService {
 
     for (const person of [...followers, ...following]) {
       if (watchedLogins.has(person.login) || seen.has(person.login)) continue;
-      // Не предлагаем добавить самого себя
+      // Не предлагает добавить самого себя (какой дурак это будет делать huh ?)
       if (person.login === account.login) continue;
       seen.add(person.login);
       suggestions.push({
@@ -135,8 +131,7 @@ class WatchedService {
     const from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const to = new Date().toISOString();
 
-    // Тянем последовательно, чтобы не улететь по rate-limit GitHub при
-    // большом списке отслеживаемых. Для диплома этого достаточно.
+    // Тянет последовательно, чтобы не улететь по rate-limit GitHub
     const results: WatchedActivity[] = [];
     for (const w of watched) {
       try {
@@ -155,7 +150,6 @@ class WatchedService {
         });
       } catch (err) {
         console.error(`[watched] Не удалось получить активность ${w.githubLogin}:`, err);
-        // Пропускаем конкретного юзера, но не роняем весь запрос
       }
     }
 
