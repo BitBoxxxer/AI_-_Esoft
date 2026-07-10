@@ -111,6 +111,8 @@ class TelegramService {
 
     let sent = 0;
     const todayStr = new Date().toISOString().slice(0, 10);
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     for (const user of users) {
       try {
@@ -124,7 +126,12 @@ class TelegramService {
         const account = await authService.getGithubAccount(user.id);
         if (!account) continue;
 
-        const days = await fetchContributions(account.login, account.accessToken, todayStr, todayStr);
+        const days = await fetchContributions(
+          account.login,
+          account.accessToken,
+          startOfDay.toISOString(),
+          new Date().toISOString()
+        );
         const todayContributions = days.find((d) => d.date === todayStr)?.contributionCount ?? 0;
 
         if (todayContributions < user.dailyGoal) {
