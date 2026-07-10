@@ -65,12 +65,12 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-black text-white p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Профиль</h1>
+      <div className="flex items-center justify-between mb-6 max-w-lg mx-auto">
+        <h1 className="text-3xl font-bold">👤 Профиль</h1>
         <BackToDashboardButton />
       </div>
 
-      <div className="bg-gray-900 rounded-xl p-6 max-w-md">
+      <div className="bg-gray-900 rounded-xl p-6 max-w-lg mx-auto">
         <div className="flex items-center gap-4 mb-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {profile.image && (
@@ -85,7 +85,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-gray-400">Дневная норма</label>
-            <p className="text-2xl font-bold">{profile.dailyGoal || "-"}</p>
+            <p className="text-2xl font-bold">{profile.dailyGoal || "—"}</p>
           </div>
 
           <div className="flex items-center justify-between">
