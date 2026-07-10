@@ -12,12 +12,15 @@ interface UserProfile {
   image: string | null;
   dailyGoal: number;
   notifyAboutGoal: boolean;
+  telegramChatId?: string | null;
 }
 
 export default function ProfilePage() {
   const status = useRequireAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
+  const [telegramCode, setTelegramCode] = useState<string | null>(null);
+  const [botUsername, setBotUsername] = useState<string | null>(null);
 
   
   const loadProfile = useCallback(async () => {
@@ -38,6 +41,21 @@ export default function ProfilePage() {
     });
     if (res.ok) setProfile(await res.json());
     setLoading(false);
+  };
+
+  const connectTelegram = async () => {
+    const res = await apiFetch("/api/telegram/link-code", { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      setTelegramCode(data.code);
+      setBotUsername(data.botUsername);
+    }
+  };
+
+  const disconnectTelegram = async () => {
+    await apiFetch("/api/telegram/unlink", { method: "POST" });
+    setTelegramCode(null);
+    await loadProfile();
   };
 
   if (status === "loading" || !profile)
@@ -85,6 +103,45 @@ export default function ProfilePage() {
             />
             </button>
           </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-gray-800">
+          <p className="text-sm text-gray-300 mb-2">Напоминания в Telegram</p>
+          {profile.telegramChatId ? (
+            <div className="flex items-center justify-between">
+              <span className="text-green-400 text-sm">✅ Telegram подключён</span>
+              <button
+                onClick={disconnectTelegram}
+                className="text-sm text-gray-400 hover:text-red-400"
+              >
+                Отключить
+              </button>
+            </div>
+          ) : telegramCode ? (
+            <div className="text-sm space-y-2">
+              <p className="text-gray-400">
+                Открой бота и отправь ему <code className="bg-gray-800 px-1 rounded">/start {telegramCode}</code>,
+                либо просто перейди по ссылке:
+              </p>
+              {botUsername && (
+                <a
+                  href={`https://t.me/${botUsername}?start=${telegramCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-3 py-1.5 bg-blue-600 rounded-lg hover:bg-blue-500 transition"
+                >
+                  Открыть в Telegram
+                </a>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={connectTelegram}
+              className="px-3 py-1.5 bg-blue-600 rounded-lg text-sm hover:bg-blue-500 transition"
+            >
+              Подключить Telegram
+            </button>
+          )}
         </div>
       </div>
     </main>

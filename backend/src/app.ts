@@ -17,6 +17,7 @@ import userRoutes from "./routes/user.routes";
 import graph3dRoutes from "./routes/graph3d.routes";
 import watchedRoutes from "./routes/watched.routes";
 import badgeRoutes from "./routes/badge.routes";
+import telegramRoutes from "./routes/telegram.routes";
 
 const app = express();
 
@@ -48,5 +49,6 @@ app.use("/api/user", userRoutes);
 app.use("/api/graph3d", graph3dRoutes);
 app.use("/api/watched", watchedRoutes);
 app.use("/api/badge", badgeRoutes);
+app.use("/api/telegram", telegramRoutes);
 
 export default app;

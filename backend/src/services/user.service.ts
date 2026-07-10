@@ -4,6 +4,7 @@ import { withRetry } from "../utils/prismaRetry";
 const PROFILE_SELECT = {
   id: true, name: true, email: true, image: true,
   githubLogin: true, dailyGoal: true, notifyAboutGoal: true,
+  telegramChatId: true,
 } as const;
 
 class UserService {
