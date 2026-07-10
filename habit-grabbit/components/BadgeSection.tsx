@@ -14,7 +14,7 @@ export default function BadgeSection({ githubLogin }: BadgeSectionProps) {
       <div className="mt-6 pt-6 border-t border-gray-800">
         <p className="text-sm text-gray-300 mb-2">🏅 Бейдж для GitHub-профиля</p>
         <p className="text-sm text-gray-500">
-          Не удалось определить твой GitHub-логин — переподключи GitHub в профиле.
+          Не удалось определить твой GitHub-логин - переподключи GitHub в профиле.
         </p>
       </div>
     );
@@ -31,12 +31,12 @@ export default function BadgeSection({ githubLogin }: BadgeSectionProps) {
 
   return (
     <div className="mt-6 pt-6 border-t border-gray-800">
-      <p className="text-sm text-gray-300 mb-1">🏅 Бейдж со стриком для GitHub-профиля</p>
+      <p className="text-sm text-gray-300 mb-1">Бейдж со стриком для GitHub-профиля</p>
       <p className="text-xs text-gray-500 mb-4">
-        Живая картинка с твоим текущим стриком — обновляется сама, вставь один раз и забудь.
+        Живая картинка с твоим текущим стриком - обновляется сама, вставь один раз и забудь.
       </p>
 
-      {/* Живой превью бейджа — именно то, что увидят гости твоего профиля */}
+      {/* Живой превью бейджа - именно то, что увидят гости твоего профиля */}
       <div className="mb-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -60,14 +60,14 @@ export default function BadgeSection({ githubLogin }: BadgeSectionProps) {
             github.com/new
           </a>{" "}
           и создай репозиторий с именем{" "}
-          <b className="text-white">точно как твой username</b> —{" "}
+          <b className="text-white">точно как твой username</b> -{" "}
           <code className="bg-gray-800 px-1 rounded">{githubLogin}/{githubLogin}</code>.
           GitHub сам покажет README из него на странице твоего профиля.
         </li>
         <li>
           При создании включи галочку{" "}
           <span className="text-gray-300">&quot;Add a README file&quot;</span>{" "}
-          (если репозиторий уже есть — просто открой{" "}
+          (если репозиторий уже есть - просто открой{" "}
           <code className="bg-gray-800 px-1 rounded">README.md</code> в нём).
         </li>
         <li>Вставь строку ниже в README.md и сохрани (Commit changes).</li>
@@ -86,7 +86,7 @@ export default function BadgeSection({ githubLogin }: BadgeSectionProps) {
       </div>
 
       <p className="text-xs text-gray-600 mt-3">
-        Готово — после коммита открой свой профиль на GitHub, бейдж уже там.
+        Готово - после коммита открой свой профиль на GitHub, бейдж уже там.
       </p>
     </div>
   );

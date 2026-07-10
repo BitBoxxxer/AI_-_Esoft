@@ -66,7 +66,7 @@ export default function ProfilePage() {
   return (
     <main className="min-h-screen bg-black text-white p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">👤 Профиль</h1>
+        <h1 className="text-3xl font-bold">Профиль</h1>
         <BackToDashboardButton />
       </div>
 
