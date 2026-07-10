@@ -139,7 +139,7 @@ export default function GoalsPage() {
   return (
     <main className="min-h-screen bg-black text-white p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">🎯 Мои цели</h1>
+        <h1 className="text-3xl font-bold">Мои цели</h1>
         <BackToDashboardButton />
       </div>
 
