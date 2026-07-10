@@ -70,7 +70,7 @@ export default function Graph3D() {
         )}
         <img
           key={version}
-          // На первой попытке (version === 0) refresh не форсируем, дальше —
+          // На первой попытке (version === 0) refresh не форсируем, дальше -
           // всегда с ?refresh=true, чтобы бэкенд точно перегенерировал картинку.
           src={`${API_URL}/api/graph3d${version > 0 ? "?refresh=true" : ""}`}
           alt="3D график активности"

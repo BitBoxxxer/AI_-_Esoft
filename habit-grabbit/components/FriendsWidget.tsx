@@ -35,7 +35,7 @@ export default function FriendsWidget() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // буфер обмена недоступен (например, нет https) — молча игнорируем
+      // буфер обмена недоступен (например, нет https) - молча игнорируем
     }
   };
 
@@ -63,7 +63,7 @@ export default function FriendsWidget() {
             <Link href="/friends" className="text-blue-400 hover:text-blue-300">
               Друзья
             </Link>
-            . Регистрация в Habit Grabbit для этого не нужна — достаточно,
+            . Регистрация в Habit Grabbit для этого не нужна - достаточно,
             чтобы у человека был аккаунт на GitHub.
           </p>
           <div className="flex items-center gap-2 pt-1">

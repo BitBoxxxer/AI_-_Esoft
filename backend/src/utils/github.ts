@@ -214,7 +214,7 @@ export interface GithubPublicProfile {
   avatar_url: string;
 }
 
-// /user/followers и /user/following — работают для "себя" (владельца токена),
+// /user/followers и /user/following - работают для "себя" (владельца токена),
 // без указания логина в пути
 export async function fetchFollowers(
   accessToken: string
@@ -242,7 +242,7 @@ export async function fetchFollowing(
   return res.json();
 }
 
-// Публичный профиль по логину — чтобы показать аватар/имя того, на кого подписались
+// Публичный профиль по логину - чтобы показать аватар/имя того, на кого подписались
 export async function fetchPublicProfile(
   login: string,
   accessToken: string
@@ -261,22 +261,22 @@ export async function fetchPublicProfile(
 // GitHub формирует contributionCalendar в таймзоне самого аккаунта, а не в UTC.
 // Если весь остальной код будет искать "сегодня" через new Date() в UTC, для
 // людей в таймзонах восточнее UTC (GMT+X) будет казаться, что "сегодняшних"
-// данных ещё нет, хотя GitHub их уже отдал — сутки в UTC наступают позже.
+// данных ещё нет, хотя GitHub их уже отдал - сутки в UTC наступают позже.
 // Поэтому "сегодня" везде надо брать из самих данных: недели/дни в массиве
-// идут в хронологическом порядке, значит последний элемент — самый свежий
+// идут в хронологическом порядке, значит последний элемент - самый свежий
 // день, который знает GitHub, вот его и считаем "сегодня".
 export function latestDateStr(days: ContributionDay[]): string {
   if (days.length === 0) return new Date().toISOString().slice(0, 10);
   return days[days.length - 1].date;
 }
 
-// Простой подсчёт стрика по массиву дней активности — сколько подряд
+// Простой подсчёт стрика по массиву дней активности - сколько подряд
 // дней (включая сегодня либо вчера, если сегодня ещё пусто) есть контрибуции
 export function calculateStreakFromDays(days: ContributionDay[]): number {
   if (days.length === 0) return 0;
 
   const byDate = new Map(days.map((d) => [d.date, d.contributionCount]));
-  // "Сегодня" — последний день, который реально прислал GitHub (уже в его
+  // "Сегодня" - последний день, который реально прислал GitHub (уже в его
   // собственной таймзоне), а не системные часы сервера. См. комментарий у
   // latestDateStr выше.
   const todayStr = latestDateStr(days);

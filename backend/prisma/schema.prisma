@@ -128,7 +128,7 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Отслеживаемые GitHub-пользователи ("друзья") — не обязательно
+// Отслеживаемые GitHub-пользователи ("друзья") - не обязательно
 // зарегистрированы в самом приложении, просто публичный логин
 model WatchedUser {
   id          String   @id @default(cuid())

@@ -12,7 +12,7 @@ const execFileAsync = promisify(execFile);
 // Устанавливается командой:
 //   npm install github:yoshi389111/github-profile-3d-contrib
 // Пакет уже содержит собранный dist/index.js (это обязательное требование
-// для GitHub Actions на JS — билд-шаг не нужен).
+// для GitHub Actions на JS - билд-шаг не нужен).
 const CLI_PATH = path.join(
   __dirname,
   "..",
@@ -24,14 +24,14 @@ const CLI_PATH = path.join(
 );
 
 // По умолчанию тулза генерирует несколько вариантов SVG в папку
-// <cwd>/profile-3d-contrib/*.svg. Берём "ночной радужный" — он больше всего
+// <cwd>/profile-3d-contrib/*.svg. Берём "ночной радужный" - он больше всего
 // похож на то, что было в твоём README.
 const OUTPUT_FILENAME = "profile-night-rainbow.svg";
 
 // Кэш готовых SVG на пользователя, чтобы не гонять генерацию (которая сама
 // делает несколько запросов к GitHub GraphQL/REST) на каждый чих
 const cache = new Map<string, { svg: string; expiresAt: number }>();
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 минут — эта картинка и так меняется медленно
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 минут - эта картинка и так меняется медленно
 
 export function invalidateGraph3dCache(userId: string) {
   cache.delete(userId);
@@ -43,7 +43,7 @@ class Graph3DService {
     if (!account) {
       throw new HttpError(
         401,
-        "GitHub аккаунт не подключен или токен устарел — войдите снова"
+        "GitHub аккаунт не подключен или токен устарел - войдите снова"
       );
     }
 
@@ -58,7 +58,7 @@ class Graph3DService {
   }
 
   private async generate(login: string, accessToken: string): Promise<string> {
-    // Отдельная временная папка на каждый вызов — чтобы параллельные
+    // Отдельная временная папка на каждый вызов - чтобы параллельные
     // генерации для разных пользователей не затирали файлы друг друга
     const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "3d-contrib-"));
 
@@ -79,7 +79,7 @@ class Graph3DService {
       console.error("[graph3d] Ошибка генерации SVG:", err);
       throw new HttpError(500, "Не удалось сгенерировать 3D-график активности");
     } finally {
-      // Подчищаем за собой — эти временные SVG-файлы больше не нужны,
+      // Подчищаем за собой - эти временные SVG-файлы больше не нужны,
       // мы их уже прочитали и закэшировали в памяти
       await fs.rm(workDir, { recursive: true, force: true }).catch(() => {});
     }

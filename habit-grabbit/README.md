@@ -1,4 +1,4 @@
-# Habit GRabbit — Frontend (Next.js)
+# Habit GRabbit - Frontend (Next.js)
 
 Это чисто UI-часть проекта. Вся авторизация и данные теперь приходят с
 отдельного Express-бэкенда (папка `../backend`).
@@ -26,17 +26,28 @@
 
 - next-auth больше не используется.
 - Кнопка "Войти через GitHub" (`/login`) ведёт на
-  `${NEXT_PUBLIC_API_URL}/auth/github` — это редирект на GitHub OAuth,
+  `${NEXT_PUBLIC_API_URL}/auth/github` - это редирект на GitHub OAuth,
   который делает backend.
 - После логина backend ставит httpOnly cookie `token` и редиректит обратно
   на `${FRONTEND_URL}/dashboard` (см. `backend/.env`).
-- `lib/AuthContext.tsx` — замена `SessionProvider`/`useSession`: при монтировании
+- `lib/AuthContext.tsx` - замена `SessionProvider`/`useSession`: при монтировании
   дергает `GET /auth/me` на бэкенде и хранит пользователя в React-контексте.
-- `lib/useRequireAuth.ts` — замена `middleware.ts`: если `/auth/me` вернул 401,
+- `lib/useRequireAuth.ts` - замена `middleware.ts`: если `/auth/me` вернул 401,
   редиректит на `/login`. Используется в защищённых страницах
   (`dashboard`, `goals`, `chat`, `profile`).
-- `lib/api.ts` — обёртка над `fetch` с `credentials: "include"`, чтобы cookie
+- `lib/api.ts` - обёртка над `fetch` с `credentials: "include"`, чтобы cookie
   всегда уходила на бэкенд (в том числе на другой домен/порт).
+
+## Страницы
+
+| Роут | Описание |
+|---|---|
+| `/login` | Вход через GitHub |
+| `/dashboard` | Главный экран: heatmap, streak, 3D-график, дневная норма |
+| `/goals` | Kanban-доска целей |
+| `/chat` | Чат с AI-ассистентом |
+| `/profile` | Профиль, настройки уведомлений, привязка Telegram |
+| `/friends` | Отслеживаемые GitHub-пользователи и их активность |
 
 ## Продакшн / деплой
 
@@ -44,7 +55,7 @@
 
 - Frontend можно деплоить на Vercel как обычно.
 - Backend **нельзя** деплоить на Vercel как serverless-функцию, если чат
-  использует локальный Ollama — деплойте его на VPS/Render/Railway (см.
+  использует локальный Ollama - деплойте его на VPS/Render/Railway (см.
   `backend/README.md`).
 - В проде backend должен ставить cookie с `sameSite: "none"; secure: true`
   (уже реализовано в `auth.controller.ts`), а `FRONTEND_URL`/`NEXT_PUBLIC_API_URL`

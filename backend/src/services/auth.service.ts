@@ -55,8 +55,8 @@ class AuthService {
         })
       );
 
-      // Обновляем токен — нужен для GitHub GraphQL API (/stats/refresh)
-      // Запускаем fire-and-forget: если PgBouncer сбросит соединение — не роняем весь callback
+      // Обновляем токен - нужен для GitHub GraphQL API (/stats/refresh)
+      // Запускаем fire-and-forget: если PgBouncer сбросит соединение - не роняем весь callback
       withRetry(() =>
         prisma.account.update({
           where: { id: existingAccount.id },
@@ -100,7 +100,7 @@ class AuthService {
     const token = signJwt({ id: user.id, email: user.email, name: user.name });
 
     // Пользователь мог переподключить другой GitHub-аккаунт (другой login,
-    // другой access_token) — старые закэшированные статы/3D-график/активность
+    // другой access_token) - старые закэшированные статы/3D-график/активность
     // друзей по этому userId больше не актуальны, сбрасываем их.
     invalidateStatsCache(user.id);
     invalidateGraph3dCache(user.id);

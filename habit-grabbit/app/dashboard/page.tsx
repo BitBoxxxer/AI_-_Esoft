@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const parsedStats = stats.map((s) => ({ ...s, date: new Date(s.date) }));
   const streak = calculateStreak(parsedStats);
 
-  // "Сегодня" — самая свежая дата, которую реально прислал GitHub (уже в
+  // "Сегодня" - самая свежая дата, которую реально прислал GitHub (уже в
   // таймзоне самого аккаунта), а не часы браузера/сервера в UTC. Иначе ночью
   // в таймзонах восточнее UTC кажется, что сегодняшних данных ещё нет, хотя
   // GitHub их уже отдал.
@@ -162,10 +162,10 @@ function calculateStreak(
   if (stats.length === 0) return 0;
   const sorted = [...stats].sort((a, b) => b.date.getTime() - a.date.getTime());
   let streak = 0;
-  // "Сегодня" — самая свежая запись, а не системные часы: GitHub формирует
+  // "Сегодня" - самая свежая запись, а не системные часы: GitHub формирует
   // календарь контрибуций в таймзоне аккаунта, а не в UTC, так что сверяться
   // с new Date() на сервере/в браузере ненадёжно (см. calculateStreakFromDays
-  // на бэкенде — та же идея).
+  // на бэкенде - та же идея).
   const todayStat = sorted[0];
   const today = new Date(todayStat.date);
   today.setUTCHours(0, 0, 0, 0);

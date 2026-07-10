@@ -3,7 +3,7 @@ import telegramService from "../services/telegram.service";
 import { AuthRequest } from "../middlewares/auth.middleware";
 
 class TelegramController {
-  // Авторизованный роут — фронт вызывает, чтобы получить код привязки
+  // Авторизованный роут - фронт вызывает, чтобы получить код привязки
   async linkCode(req: AuthRequest, res: Response) {
     try {
       const { code, botUsername } = await telegramService.generateLinkCode(req.user!.id);
@@ -24,7 +24,7 @@ class TelegramController {
     }
   }
 
-  // Публичный вебхук — сюда стучится сам Telegram, проверяем секрет в query
+  // Публичный вебхук - сюда стучится сам Telegram, проверяем секрет в query
   async webhook(req: Request, res: Response) {
     try {
       const secret = req.query.secret;
@@ -35,12 +35,12 @@ class TelegramController {
       return res.status(200).send("OK");
     } catch (error) {
       console.error("[telegram webhook]", error);
-      // Telegram ретраит на ошибки — отвечаем 200, чтобы не спамил ретраями
+      // Telegram ретраит на ошибки - отвечаем 200, чтобы не спамил ретраями
       return res.status(200).send("OK");
     }
   }
 
-  // Триггер рассылки напоминаний — вызывается внешним cron-сервисом
+  // Триггер рассылки напоминаний - вызывается внешним cron-сервисом
   // (см. инструкцию), защищён секретом в query
   async runReminders(req: Request, res: Response) {
     try {

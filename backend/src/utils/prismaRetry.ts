@@ -3,7 +3,7 @@
  * "prepared statement does not exist"). Эта обёртка повторяет запрос
  * с экспоненциальным backoff.
  *
- * Если ошибки P1017 всё равно возникают — убедись что в DATABASE_URL есть
+ * Если ошибки P1017 всё равно возникают - убедись что в DATABASE_URL есть
  * pgbouncer=true и connection_limit=1
  */
 export async function withRetry<T>(

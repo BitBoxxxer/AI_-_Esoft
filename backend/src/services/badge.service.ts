@@ -2,7 +2,7 @@ import { prisma } from "../config/prisma";
 import { withRetry } from "../utils/prismaRetry";
 import { fetchContributions, calculateStreakFromDays } from "../utils/github";
 
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1 час — бейдж в чужом README не должен дёргать GitHub часто
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 час - бейдж в чужом README не должен дёргать GitHub часто
 const cache = new Map<string, { svg: string; expiresAt: number }>();
 
 const COLORS = {
@@ -36,7 +36,7 @@ function cellColor(count: number): string {
   return COLORS.cellLevels[3];
 }
 
-// Бейдж "не зарегистрирован" — мягкий призыв попробовать приложение
+// Бейдж "не зарегистрирован" - мягкий призыв попробовать приложение
 function buildNotRegisteredSvg(login: string): string {
   const width = 380;
   const height = 90;
@@ -46,7 +46,7 @@ function buildNotRegisteredSvg(login: string): string {
     @${escapeXml(login)} ещё не в Habit Grabbit
   </text>
   <text x="16" y="58" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="${COLORS.subtext}">
-    Отслеживай свой GitHub-стрик — habit-grabbit.vercel.app
+    Отслеживай свой GitHub-стрик - habit-grabbit.vercel.app
   </text>
 </svg>`;
 }

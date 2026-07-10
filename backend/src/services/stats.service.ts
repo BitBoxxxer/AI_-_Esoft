@@ -32,7 +32,7 @@ function toFrontendShape(days: ContributionDay[]): FrontendDailyStat[] {
 
 // Простой in-memory кэш, чтобы не долбить GitHub GraphQL на каждый чих
 // (дашборд + уведомления могут запрашиваться почти одновременно).
-// Живёт только пока жив процесс — это ок, это не источник правды, а просто TTL-кэш.
+// Живёт только пока жив процесс - это ок, это не источник правды, а просто TTL-кэш.
 const cache = new Map<string, { data: ContributionDay[]; expiresAt: number }>();
 const CACHE_TTL_MS = 2 * 60 * 1000; // 2 минуты
 
@@ -65,11 +65,11 @@ export function invalidateStatsCache(userId: string) {
 }
 
 class StatsService {
-  // Больше не читаем из БД — берём напрямую из GitHub (с кэшем на 2 минуты)
+  // Больше не читаем из БД - берём напрямую из GitHub (с кэшем на 2 минуты)
   async getStats(userId: string, days: number) {
     const account = await authService.getGithubAccount(userId);
     if (!account) {
-      throw new HttpError(401, "GitHub аккаунт не подключен или токен устарел — войдите снова");
+      throw new HttpError(401, "GitHub аккаунт не подключен или токен устарел - войдите снова");
     }
 
     const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -86,18 +86,18 @@ class StatsService {
     return toFrontendShape(contributionDays);
   }
 
-  // Раньше тут был цикл createMany/updateMany на ~365 записей — именно он
+  // Раньше тут был цикл createMany/updateMany на ~365 записей - именно он
   // постоянно ловил обрывы соединения с Supabase. Теперь просто сбрасываем
   // кэш и говорим фронту "сходи забери свежие данные из GitHub".
   async refreshStats(userId: string) {
     const account = await authService.getGithubAccount(userId);
     if (!account) {
-      throw new HttpError(401, "GitHub аккаунт не подключен или токен устарел — войдите снова");
+      throw new HttpError(401, "GitHub аккаунт не подключен или токен устарел - войдите снова");
     }
 
     invalidateCache(userId);
 
-    // Один живой запрос к GitHub — без единой записи в Postgres
+    // Один живой запрос к GitHub - без единой записи в Postgres
     const days = await fetchContributions(account.login, account.accessToken);
 
     // Проверка дневной цели теперь тоже считается по live-данным,

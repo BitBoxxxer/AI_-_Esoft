@@ -61,7 +61,7 @@ class TelegramService {
       if (!code) {
         await this.sendMessage(
           chatId,
-          "Привет! Чтобы привязать аккаунт — открой профиль в Habit Grabbit и нажми «Подключить Telegram»."
+          "Привет! Чтобы привязать аккаунт - открой профиль в Habit Grabbit и нажми «Подключить Telegram»."
         );
         return;
       }
@@ -89,14 +89,14 @@ class TelegramService {
       return;
     }
 
-    // Любое другое сообщение — просто игнорируем/отвечаем заглушкой
+    // Любое другое сообщение - просто игнорируем/отвечаем заглушкой
     await this.sendMessage(chatId, "Я просто напоминаю о стриках в Habit Grabbit 🙂");
   }
 
   // Рассылка напоминаний тем, у кого есть привязанный Telegram,
   // включены уведомления и норма ещё не выполнена сегодня.
   // Вызывается либо по внутреннему таймеру, либо внешним cron-запросом
-  // (см. /api/telegram/run-reminders) — это важно для Render free tier,
+  // (см. /api/telegram/run-reminders) - это важно для Render free tier,
   // который засыпает и не может полагаться только на свой setInterval.
   async runReminders(): Promise<{ checked: number; sent: number }> {
     const users = await withRetry(() =>
@@ -116,7 +116,7 @@ class TelegramService {
 
     for (const user of users) {
       try {
-        // Уже напоминали сегодня — пропускаем, чтобы не спамить
+        // Уже напоминали сегодня - пропускаем, чтобы не спамить
         // при частом запуске cron (например, раз в 15 минут)
         const alreadySentToday =
           user.lastReminderSentAt &&

@@ -150,7 +150,7 @@ export default function FriendsPage() {
 
         {watched.length === 0 && (
           <p className="text-gray-400 text-sm">
-            Пока никого не отслеживаешь — добавь друзей выше.
+            Пока никого не отслеживаешь - добавь друзей выше.
           </p>
         )}
 
@@ -179,7 +179,7 @@ export default function FriendsPage() {
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-orange-400 font-semibold">
-                      🔥 {act?.streak ?? "—"}
+                      🔥 {act?.streak ?? "-"}
                     </p>
                     <p className="text-xs text-gray-400">дней стрика</p>
                   </div>

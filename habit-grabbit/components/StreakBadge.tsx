@@ -14,7 +14,7 @@ export default function StreakBadge({ streak, atRisk = false }: StreakBadgeProps
       </p>
       {showWarning && (
         <p className="text-yellow-400 text-xs mt-1">
-          ⚠️ Сегодня ещё не было активности — позанимайся, чтобы не потерять стрик!
+          ⚠️ Сегодня ещё не было активности - позанимайся, чтобы не потерять стрик!
         </p>
       )}
     </div>

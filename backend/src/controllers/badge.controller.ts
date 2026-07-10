@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import badgeService from "../services/badge.service";
 
 class BadgeController {
-  // Публичный роут — без authMiddleware, GitHub вставляет картинки
+  // Публичный роут - без authMiddleware, GitHub вставляет картинки
   // в README без кук/токенов
   async getSvg(req: Request, res: Response) {
     try {
@@ -14,7 +14,7 @@ class BadgeController {
       const svg = await badgeService.getSvg(login);
       res.setHeader("Content-Type", "image/svg+xml");
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-      // Кэш подольше — это же чужой README, там всё равно долго не обновляется
+      // Кэш подольше - это же чужой README, там всё равно долго не обновляется
       res.setHeader("Cache-Control", "public, max-age=3600");
       return res.send(svg);
     } catch (error) {
