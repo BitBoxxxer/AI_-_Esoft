@@ -41,7 +41,7 @@ export default function LoginPage() {
       <div className="relative w-full max-w-sm rounded-2xl border border-neutral-800 bg-neutral-900/80 backdrop-blur p-8 text-center shadow-2xl">
         <h1 className="text-2xl font-bold text-white mb-1">🐇 Habit GRabbit</h1>
         <p className="text-gray-400 text-sm mb-8">
-          Привычка быстрого Git - бери эту привычку
+          Привычка ежедневной работы:D
         </p>
 
         <a

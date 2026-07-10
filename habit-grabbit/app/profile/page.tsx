@@ -4,12 +4,14 @@ import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useRequireAuth } from "@/lib/useRequireAuth";
 import BackToDashboardButton from "@/components/BackToDashboardButton";
+import BadgeSection from "@/components/BadgeSection";
 
 interface UserProfile {
   id: string;
   name: string | null;
   email: string | null;
   image: string | null;
+  githubLogin: string | null;
   dailyGoal: number;
   notifyAboutGoal: boolean;
   telegramChatId?: string | null;
@@ -143,6 +145,8 @@ export default function ProfilePage() {
             </button>
           )}
         </div>
+
+        <BadgeSection githubLogin={profile.githubLogin} />
       </div>
     </main>
   );
