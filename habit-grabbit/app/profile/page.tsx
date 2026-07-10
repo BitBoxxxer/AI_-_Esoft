@@ -85,7 +85,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-gray-400">Дневная норма</label>
-            <p className="text-2xl font-bold">{profile.dailyGoal || "—"}</p>
+            <p className="text-2xl font-bold">{profile.dailyGoal || "-"}</p>
           </div>
 
           <div className="flex items-center justify-between">
