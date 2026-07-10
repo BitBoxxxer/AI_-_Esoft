@@ -92,6 +92,12 @@ export default function DashboardPage() {
           >
             Друзья
           </a>
+          <a
+            href="/profile"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
+          >
+            Профиль
+          </a>
           <NotificationBell />
           <a
             href="/goals"
